@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Context menu now has separate 倒计时模式 / 秒表模式 entries, grouped under a single 计时模式 submenu
 - Child clock name moved outside the clock circle (below the face); double-click it to rename
 - Child clock templates: save a child clock (name, mode, duration, auto-start) via 子时钟 ▸ 保存为模板…, then rebuild one from 子时钟 ▸ 从模板选择
+- Templates can record a child clock's descendants: tick 记录下级子时钟 in the save panel to edit and store the whole chain; creating from the template rebuilds every level
 - Closing the last window quits the app, so reopening starts from a single clean clock
 - Stopwatch shows elapsed time as 时:分:秒 (`1:05:30`), with the font auto-shrinking to fit; dock badge and VoiceOver include hours past 1h
 - Chinese UI: main menu, context menu and VoiceOver descriptions are now in Chinese

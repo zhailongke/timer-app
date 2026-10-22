@@ -25,24 +25,26 @@ final class TimerTemplateTests: XCTestCase {
 
   func testUpsertReplacesSameName() {
     let defaults = self.makeDefaults()
-    MVTemplateStore.save(
-      [ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, duration: 600)],
+    MVTemplateStore.upsert(
+      ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, duration: 600),
       to: defaults
     )
-
-    // upsert 走的是 standard；同名覆盖的判定在这里单独验
-    var templates = MVTemplateStore.load(from: defaults)
-    let updated = ChildClockTemplate(id: UUID(), name: "数学", mode: .stopwatch)
-    if let index = templates.firstIndex(where: { $0.name == updated.name }) {
-      templates[index] = updated
-    } else {
-      templates.append(updated)
-    }
-    MVTemplateStore.save(templates, to: defaults)
+    MVTemplateStore.upsert(
+      ChildClockTemplate(id: UUID(), name: "数学", mode: .stopwatch),
+      to: defaults
+    )
 
     let loaded = MVTemplateStore.load(from: defaults)
     XCTAssertEqual(loaded.count, 1)
     XCTAssertEqual(loaded.first?.mode, .stopwatch)
+  }
+
+  func testUpsertKeepsDifferentNames() {
+    let defaults = self.makeDefaults()
+    MVTemplateStore.upsert(ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, duration: 600), to: defaults)
+    MVTemplateStore.upsert(ChildClockTemplate(id: UUID(), name: "英语", mode: .stopwatch), to: defaults)
+
+    XCTAssertEqual(MVTemplateStore.load(from: defaults).map(\.name), ["数学", "英语"])
   }
 
   func testRemoveTemplate() {
@@ -51,10 +53,94 @@ final class TimerTemplateTests: XCTestCase {
     let dropped = ChildClockTemplate(id: UUID(), name: "政治", mode: .countdown, duration: 300)
     MVTemplateStore.save([kept, dropped], to: defaults)
 
-    MVTemplateStore.save(MVTemplateStore.load(from: defaults).filter { $0.id != dropped.id }, to: defaults)
+    MVTemplateStore.remove(id: dropped.id, from: defaults)
 
-    let names = MVTemplateStore.load(from: defaults).map(\.name)
-    XCTAssertEqual(names, ["英语"])
+    XCTAssertEqual(MVTemplateStore.load(from: defaults).map(\.name), ["英语"])
+  }
+
+  func testNestedChildrenSurviveRoundTrip() {
+    let defaults = self.makeDefaults()
+    let grandChild = ChildClockTemplate(id: UUID(), name: "作文", mode: .countdown, duration: 1_800)
+    let child = ChildClockTemplate(
+      id: UUID(),
+      name: "英语",
+      mode: .stopwatch,
+      children: [grandChild]
+    )
+    let root = ChildClockTemplate(
+      id: UUID(),
+      name: "数学",
+      mode: .countdown,
+      duration: 3_600,
+      children: [child]
+    )
+
+    MVTemplateStore.save([root], to: defaults)
+    let loaded = MVTemplateStore.load(from: defaults).first
+
+    XCTAssertEqual(loaded?.children.count, 1)
+    XCTAssertEqual(loaded?.children.first?.name, "英语")
+    XCTAssertEqual(loaded?.children.first?.children.first?.name, "作文")
+    XCTAssertEqual(loaded?.children.first?.children.first?.duration, 1_800)
+  }
+
+  /// 早期版本存的模板没有 children，读回来应该当没有下级，而不是整份丢掉
+  func testLegacyTemplateWithoutChildren() throws {
+    let json = """
+    [{"id":"3F2504E0-4F89-11D3-9A0C-0305E82C3301","name":"数学","mode":"countdown","duration":1500,"autoStart":true}]
+    """
+    let decoded = try JSONDecoder().decode([ChildClockTemplate].self, from: Data(json.utf8))
+
+    XCTAssertEqual(decoded.count, 1)
+    XCTAssertTrue(decoded.first?.children.isEmpty ?? false)
+  }
+
+  func testFlattenedDescendantsIsPreOrder() {
+    let deep = ChildClockTemplate(id: UUID(), name: "作文", mode: .stopwatch)
+    let child = ChildClockTemplate(id: UUID(), name: "英语", mode: .stopwatch, children: [deep])
+    let sibling = ChildClockTemplate(id: UUID(), name: "政治", mode: .stopwatch)
+    let root = ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, children: [child, sibling])
+
+    XCTAssertEqual(root.flattenedDescendants.map(\.name), ["英语", "作文", "政治"])
+  }
+
+  func testApplyEditsRewritesNamesAndAutoStart() {
+    var root = ChildClockTemplate(
+      id: UUID(),
+      name: "数学",
+      mode: .countdown,
+      children: [
+        ChildClockTemplate(
+          id: UUID(),
+          name: "英语",
+          mode: .stopwatch,
+          autoStart: true,
+          children: [ChildClockTemplate(id: UUID(), name: "作文", mode: .stopwatch, autoStart: true)]
+        )
+      ]
+    )
+
+    root.applyEdits([(name: "英语阅读", autoStart: false), (name: "", autoStart: false)])
+
+    XCTAssertEqual(root.children.first?.name, "英语阅读")
+    XCTAssertEqual(root.children.first?.autoStart, false)
+    XCTAssertEqual(root.children.first?.children.first?.name, "作文", "名字留空就保持原样")
+    XCTAssertEqual(root.children.first?.children.first?.autoStart, false)
+  }
+
+  func testSummaryCountsDescendants() {
+    let root = ChildClockTemplate(
+      id: UUID(),
+      name: "数学",
+      mode: .countdown,
+      duration: 1_500,
+      children: [
+        ChildClockTemplate(id: UUID(), name: "大题", mode: .stopwatch),
+        ChildClockTemplate(id: UUID(), name: "检查", mode: .stopwatch)
+      ]
+    )
+
+    XCTAssertEqual(root.summary, "倒计时 25:00 · 含 2 个下级")
   }
 
   func testSummary() {
