@@ -120,6 +120,19 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(view.renameHintImageView.alphaValue, 0.6)
   }
 
+  /// 悬停 / 改名会换成 attributedStringValue，少了段落样式文字就会跳到左边
+  func testTitleKeepsCenteredAlignmentWhenAttributed() {
+    let view = MVClockView()
+    view.isTitleEditable = true
+    view.clockTitle = "数学"
+
+    view.setTitleHovered(true)
+
+    let style = view.titleLabel.attributedStringValue
+      .attribute(.paragraphStyle, at: 0, effectiveRange: nil) as? NSParagraphStyle
+    XCTAssertEqual(style?.alignment, .center)
+  }
+
   /// 铅笔图标小，点区域要往外扩一圈
   func testRenameButtonHitAreaIsLargerThanIcon() {
     let view = MVClockView()

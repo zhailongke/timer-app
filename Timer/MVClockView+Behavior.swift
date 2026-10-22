@@ -78,9 +78,13 @@ extension MVClockView {
   override func mouseUp(with event: NSEvent) {
     let point = self.convert(event.locationInWindow, from: nil)
 
-    // 名字右边的铅笔是改名按钮
+    // 名字右边的铅笔是改名按钮；已经在改名时再点一次就是「完成」
     if self.isTitleEditable, self.renameHintHitFrame.contains(point) {
-      self.beginTitleEditing()
+      if self.isEditingTitle {
+        self.endTitleEditing()
+      } else {
+        self.beginTitleEditing()
+      }
       self.updateClockFaceView()
       return
     }

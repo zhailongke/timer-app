@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Child clock name moved outside the clock circle (below the face); double-click it to rename
 - Child clock templates: save a child clock (name, mode, duration, auto-start) via 子时钟 ▸ 保存为模板…, then rebuild one from 子时钟 ▸ 从模板选择
 - Renaming is now triggered by the pencil button beside the name instead of double-clicking (double-click left the field stuck in edit mode, which killed the keyboard shortcuts)
+- Hovering the name no longer makes it jump to the left: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)
+- The pencil click ends an in-progress rename instead of doing nothing, and a rename that fails to focus the field rolls back instead of leaving a stuck edit state
 - Renaming no longer leaks keys to the clock shortcuts: digits / s / enter typed in the title field stay in the field
 - A dim pencil beside a child clock's name hints that it is editable; hovering brightens the pencil and underlines the name
 - Blue round control button in the top-right corner: shows pause while running and play when stopped, and clicking it toggles like clicking the clock face

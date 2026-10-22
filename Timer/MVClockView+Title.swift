@@ -13,7 +13,25 @@ extension MVClockView: NSTextFieldDelegate {
     self.titleLabel.delegate = self
     self.renameHintImageView.alphaValue = 0
     self.setTitleUnderlined(false)
-    self.window?.makeFirstResponder(self.titleLabel)
+
+    // 面板可能不是 key window，那时 makeFirstResponder 会悄悄失败；
+    // 没真的进到编辑态就回滚，绝不留一个「正在编辑」却打不了字的假状态
+    if let window = self.window {
+      if !window.isKeyWindow { window.makeKey() }
+      window.makeFirstResponder(self.titleLabel)
+
+      let editingStarted =
+        self.titleLabel.currentEditor() != nil
+        || window.firstResponder === self.titleLabel
+        || window.firstResponder is NSText
+      guard editingStarted else {
+        self.titleLabel.isEditable = false
+        self.titleLabel.isSelectable = self.isTitleEditable
+        self.setTitleHovered(false)
+        return
+      }
+    }
+
     self.titleLabel.selectText(nil)
   }
 
@@ -39,6 +57,24 @@ extension MVClockView: NSTextFieldDelegate {
     self.endTitleEditing()
   }
 
+  /// 回车确认，esc 撤销（输入框里的默认行为会被窗口的按键处理吃掉，这里自己接）
+  func control(
+    _: NSControl,
+    textView _: NSTextView,
+    doCommandBy commandSelector: Selector
+  ) -> Bool {
+    if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+      self.endTitleEditing()
+      return true
+    }
+    if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+      self.titleLabel.abortEditing()
+      self.endTitleEditing()
+      return true
+    }
+    return false
+  }
+
   /// 鼠标停在名字上：铅笔变亮，名字加下划线，暗示这块可以编辑
   func setTitleHovered(_ hovered: Bool) {
     guard self.isTitleEditable, !self.isEditingTitle else { return }
@@ -57,11 +93,18 @@ extension MVClockView: NSTextFieldDelegate {
     self.renameHintImageView.frame = NSRect(x: hintX, y: 1, width: 12, height: 14)
   }
 
+  /// 必须带上段落样式：attributedStringValue 一设，文本框自己的 alignment 就失效了，
+  /// 少了 .paragraphStyle 文字会跳到左边（框在 x=6，看着就像跑到左下角）
   private func setTitleUnderlined(_ underlined: Bool) {
     let font = self.titleLabel.font ?? NSFont.systemFont(ofSize: 10, weight: .medium)
+    let paragraph = NSMutableParagraphStyle()
+    paragraph.alignment = .center
+    paragraph.lineBreakMode = .byTruncatingTail
+
     let attributes: [NSAttributedString.Key: Any] = [
       .font: font,
       .foregroundColor: NSColor.white,
+      .paragraphStyle: paragraph,
       .underlineStyle: underlined ? NSUnderlineStyle.single.rawValue : 0
     ]
     self.titleLabel.attributedStringValue = NSAttributedString(
