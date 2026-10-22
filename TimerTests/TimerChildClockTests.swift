@@ -92,6 +92,34 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(view.clockTitle, "子时钟1")
   }
 
+  func testTypingTitleDoesNotTriggerShortcuts() {
+    let view = MVClockView()
+    view.setMode(.countdown)
+    view.isTitleEditable = true
+    view.clockTitle = "数学"
+
+    view.beginTitleEditing()
+    view.keyUp(with: Self.keyEvent(characters: "5"))
+    view.keyUp(with: Self.keyEvent(characters: "s"))
+
+    XCTAssertEqual(view.seconds, 0, "改名时打数字不该去设时长")
+    XCTAssertEqual(view.mode, .countdown, "改名时打 s 不该切模式")
+  }
+
+  func testRenameHintShowsOnlyForEditableTitle() {
+    let view = MVClockView()
+    XCTAssertEqual(view.renameHintImageView.alphaValue, 0)
+
+    view.isTitleEditable = true
+    XCTAssertGreaterThan(view.renameHintImageView.alphaValue, 0)
+
+    view.setTitleHovered(true)
+    XCTAssertEqual(view.renameHintImageView.alphaValue, 1)
+
+    view.setTitleHovered(false)
+    XCTAssertEqual(view.renameHintImageView.alphaValue, 0.45)
+  }
+
   func testChildTitleIsWhite() {
     let view = MVClockView()
     let color = view.titleLabel.textColor?.usingColorSpace(.deviceRGB)

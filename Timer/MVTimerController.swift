@@ -168,12 +168,22 @@ final class MVTimerController: NSWindowController {
   /// Tab 键码；MVWindow 与这里共用，避免两处各写一份
   static let tabKeyCode: UInt16 = 48
 
+  /// 正在输入框里打字（改名）：此时按键归输入框，不往下当时钟快捷键
+  private var isTypingInTitle: Bool {
+    guard self.clockView.isEditingTitle else { return false }
+    guard let responder = self.window?.firstResponder else { return true }
+    return responder === self.clockView.titleLabel || responder is NSText
+  }
+
   override func keyUp(with event: NSEvent) {
+    if self.isTypingInTitle { return }
     self.clockView.keyUp(with: event)
   }
 
   // Override required to suppress system beep on key press
   override func keyDown(with event: NSEvent) {
+    if self.isTypingInTitle { return }
+
     if event.keyCode == Self.tabKeyCode {
       self.toggleMode()
       return

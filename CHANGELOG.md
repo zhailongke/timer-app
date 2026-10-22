@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Context menu now has separate 倒计时模式 / 秒表模式 entries, grouped under a single 计时模式 submenu
 - Child clock name moved outside the clock circle (below the face); double-click it to rename
 - Child clock templates: save a child clock (name, mode, duration, auto-start) via 子时钟 ▸ 保存为模板…, then rebuild one from 子时钟 ▸ 从模板选择
+- Renaming no longer leaks keys to the clock shortcuts: digits / s / enter typed in the title field stay in the field
+- A dim pencil beside a child clock's name hints that it is editable; hovering brightens the pencil and underlines the name
 - Blue round control button in the top-right corner: shows pause while running and play when stopped, and clicking it toggles like clicking the clock face
 - Child clock name is now drawn in white
 - Templates can record a child clock's descendants: tick 记录下级子时钟 in the save panel to edit and store the whole chain; creating from the template rebuilds every level

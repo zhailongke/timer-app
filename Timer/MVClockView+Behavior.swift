@@ -42,6 +42,30 @@ extension MVClockView {
     self.updateTimerTime()
   }
 
+  override func updateTrackingAreas() {
+    super.updateTrackingAreas()
+
+    if let area = self.titleTrackingArea {
+      self.removeTrackingArea(area)
+    }
+    let area = NSTrackingArea(
+      rect: self.titleLabel.frame,
+      options: [.mouseEnteredAndExited, .activeInKeyWindow],
+      owner: self,
+      userInfo: nil
+    )
+    self.addTrackingArea(area)
+    self.titleTrackingArea = area
+  }
+
+  override func mouseEntered(with _: NSEvent) {
+    self.setTitleHovered(true)
+  }
+
+  override func mouseExited(with _: NSEvent) {
+    self.setTitleHovered(false)
+  }
+
   override func mouseUp(with event: NSEvent) {
     let point = self.convert(event.locationInWindow, from: nil)
 
@@ -61,6 +85,9 @@ extension MVClockView {
   }
 
   override func keyUp(with event: NSEvent) {
+    // 正在改名时按键归输入框，不能当成时钟快捷键（否则打数字会改时长、s 会切模式）
+    if self.isEditingTitle { return }
+
     let modifiers = event.modifierFlags
     let chars = event.charactersIgnoringModifiers
     let minuteAmount = modifiers.contains(.shift) ? 10 : 1

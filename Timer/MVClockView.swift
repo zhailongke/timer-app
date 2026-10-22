@@ -8,8 +8,8 @@ final class MVClockView: NSView {
   static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
   static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
 
-  private let progressView = MVClockProgressView()
-  private let arrowView = MVClockArrowView(center: CGPoint(x: 75, y: 75))
+  let progressView = MVClockProgressView()
+  let arrowView = MVClockArrowView(center: CGPoint(x: 75, y: 75))
   private let clockFaceView = MVClockFaceView(frame: NSRect(x: 16, y: 15, width: 118, height: 118))
 
   private let pauseIconImageView: NSImageView = {
@@ -67,6 +67,20 @@ final class MVClockView: NSView {
   /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
   let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
 
+  /// 名字右边的小铅笔，提示「这里可以双击改名」；只有能改名的子时钟才显示
+  let renameHintImageView: NSImageView = {
+    let view = NSImageView(frame: NSRect(x: 112, y: 2, width: 10, height: 12))
+    if let symbol = NSImage(systemSymbolName: "pencil", accessibilityDescription: "Double click to rename") {
+      symbol.isTemplate = true
+      view.image = symbol
+    }
+    view.contentTintColor = .white
+    view.alphaValue = 0
+    return view
+  }()
+  /// 名字区域用来接「鼠标移入 / 移出」，好在悬停时提示可以改名
+  var titleTrackingArea: NSTrackingArea?
+
   let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
@@ -98,6 +112,8 @@ final class MVClockView: NSView {
   /// 子时钟可以双击改名；主时钟没有名字，不能改
   var isTitleEditable = false {
     didSet {
+      // 铅笔常驻但半透明，鼠标移上去才变亮
+      self.renameHintImageView.alphaValue = self.isTitleEditable ? 0.45 : 0
       if !self.isTitleEditable {
         self.titleLabel.isSelectable = false
       }
@@ -158,13 +174,6 @@ final class MVClockView: NSView {
     floor(self.seconds / 60)
   }
 
-  private var progress: CGFloat {
-    if self.mode == .stopwatch {
-      // 秒表：每小时绕满一圈
-      return self.seconds.truncatingRemainder(dividingBy: 3_600) / 3_600
-    }
-    return self.invertProgressToScale(self.seconds / 60.0 / 60.0)
-  }
   var didDrag: Bool = false
   var stopwatchStartDate: Date?
   /// 本次计时的真正起点，暂停再继续不会变
@@ -191,6 +200,7 @@ final class MVClockView: NSView {
     self.addSubview(self.secondsLabel)
     self.addSubview(self.startTimeLabel)
     self.addSubview(self.titleLabel)
+    self.addSubview(self.renameHintImageView)
     self.addSubview(self.controlButton)
 
     self.controlButton.onTap = { [weak self] in self?.handleClick() }
@@ -235,56 +245,6 @@ final class MVClockView: NSView {
 extension MVClockView {
   func updateClockFaceView(highlighted: Bool = false) {
     self.clockFaceView.update(highlighted: highlighted)
-  }
-
-  private func center(_ view: NSView) {
-    var frame = view.frame
-    frame.origin.x = round((self.bounds.width - frame.size.width) / 2)
-    frame.origin.y = round((self.bounds.height - frame.size.height) / 2)
-    view.frame = frame
-  }
-
-  private func layoutSubviews() {
-    let angle = -self.progress * .pi * 2 + .pi / 2
-
-    // swiftlint:disable identifier_name
-    let x = self.bounds.width / 2 + cos(angle) * self.progressView.bounds.width / 2
-    let y = self.bounds.height / 2 + sin(angle) * self.progressView.bounds.height / 2
-    // swiftlint:enable identifier_name
-
-    let point = NSPoint(x: x - self.arrowView.bounds.width / 2, y: y - self.arrowView.bounds.height / 2)
-    var frame = self.arrowView.frame
-    frame.origin = point
-    self.arrowView.frame = frame
-
-    self.progressView.progress = self.progress
-    self.arrowView.progress = self.progress
-  }
-
-  private func handleArrowControl(progress rawProgress: CGFloat) {
-    guard self.mode == .countdown else { return }
-
-    var progressValue = rawProgress
-    progressValue = self.convertProgressToScale(progressValue)
-    var seconds: CGFloat = round(progressValue * 60.0 * 60.0)
-    if seconds <= 300 {
-      seconds -= seconds.truncatingRemainder(dividingBy: 10)
-    } else {
-      seconds -= seconds.truncatingRemainder(dividingBy: 60)
-    }
-    self.setCountdownSeconds(seconds)
-    self.updateTimerTime()
-
-    self.stop()
-
-    self.paused = false
-  }
-
-  private func handleArrowControlMouseUp() {
-    guard self.mode == .countdown else { return }
-
-    self.updateTimerTime()
-    self.start()
   }
 
   func handleClick() {
@@ -374,13 +334,5 @@ extension MVClockView {
       return self
     }
     return nil
-  }
-
-  private func convertProgressToScale(_ progress: CGFloat) -> CGFloat {
-    TimerLogic.convertProgressToScale(progress, minutes: self.minutes)
-  }
-
-  private func invertProgressToScale(_ progress: CGFloat) -> CGFloat {
-    TimerLogic.invertProgressToScale(progress, minutes: self.minutes)
   }
 }
