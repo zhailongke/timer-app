@@ -60,9 +60,12 @@ final class MVClockView: NSView {
     label.font = NSFont.systemFont(ofSize: 10, weight: .medium)
     label.lineBreakMode = .byTruncatingTail
     label.alignment = .center
-    label.textColor = MVResource.color("seconds")
+    label.textColor = .white
     return label
   }()
+
+  /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
+  let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
 
   let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
@@ -188,7 +191,9 @@ final class MVClockView: NSView {
     self.addSubview(self.secondsLabel)
     self.addSubview(self.startTimeLabel)
     self.addSubview(self.titleLabel)
+    self.addSubview(self.controlButton)
 
+    self.controlButton.onTap = { [weak self] in self?.handleClick() }
     self.arrowView.isHidden = self.mode == .stopwatch
     self.startTimeLabel.string = ""
     self.updateClockFaceView()
@@ -316,7 +321,13 @@ extension MVClockView {
     self.postAccessibilityValueChanged()
   }
 
+  /// 右上角按钮跟着计时状态走：在跑显示「暂停」，停了显示「继续」
+  func updateControlButton() {
+    self.controlButton.isRunning = self.timerTask != nil
+  }
+
   private func layoutPauseViews() {
+    self.updateControlButton()
     let showPauseIcon = self.paused && self.timerTask != nil
     NSAnimationContext.runAnimationGroup { ctx in
       ctx.duration = 0.2
@@ -353,6 +364,10 @@ extension MVClockView {
     }
     // 改名时把点击交给输入框，好在里面放光标
     if view == self.titleLabel {
+      return view
+    }
+    // 控制按钮自己接点击，不再当作点时钟表面
+    if view == self.controlButton {
       return view
     }
     if view != nil {

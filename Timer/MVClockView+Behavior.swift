@@ -187,6 +187,7 @@ extension MVClockView {
       self.updateTimerTime()
       self.startTicker()
       self.updateStartTimeLabel()
+      self.updateControlButton()
       return
     }
 
@@ -196,6 +197,7 @@ extension MVClockView {
     self.paused = false
     self.stop()
     self.startTicker()
+    self.updateControlButton()
   }
 
   private func startTicker() {
@@ -214,6 +216,7 @@ extension MVClockView {
     if self.inDock, !self.paused {
       self.removeBadge()
     }
+    self.updateControlButton()
   }
 
   func startTimer(seconds: CGFloat) {

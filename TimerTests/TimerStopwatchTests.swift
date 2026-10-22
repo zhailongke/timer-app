@@ -11,6 +11,29 @@ final class TimerStopwatchTests: XCTestCase {
     XCTAssertEqual(view.seconds, 0)
   }
 
+  func testControlButtonFollowsRunningState() {
+    let view = MVClockView()
+
+    XCTAssertFalse(view.controlButton.isRunning)
+
+    view.start()
+    XCTAssertTrue(view.controlButton.isRunning)
+
+    view.stop()
+    XCTAssertFalse(view.controlButton.isRunning)
+  }
+
+  func testControlButtonTapsLikeClickingTheClock() {
+    let view = MVClockView()
+
+    view.controlButton.onTap?()
+    XCTAssertTrue(view.controlButton.isRunning)
+
+    view.controlButton.onTap?()
+    XCTAssertFalse(view.controlButton.isRunning)
+    XCTAssertTrue(view.paused)
+  }
+
   func testSwitchingModeResets() {
     let view = MVClockView()
     view.setMode(.countdown)

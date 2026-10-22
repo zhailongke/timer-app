@@ -92,6 +92,15 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(view.clockTitle, "子时钟1")
   }
 
+  func testChildTitleIsWhite() {
+    let view = MVClockView()
+    let color = view.titleLabel.textColor?.usingColorSpace(.deviceRGB)
+
+    XCTAssertEqual(color?.redComponent ?? 0, 1, accuracy: 0.01)
+    XCTAssertEqual(color?.greenComponent ?? 0, 1, accuracy: 0.01)
+    XCTAssertEqual(color?.blueComponent ?? 0, 1, accuracy: 0.01)
+  }
+
   private static func keyEvent(characters: String) -> NSEvent {
     guard let event = NSEvent.keyEvent(
       with: .keyUp,

@@ -34,6 +34,7 @@
 		CC000001CCCC000700000001 /* MVClockView+Labels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000700000000 /* MVClockView+Labels.swift */; };
 		CC000001CCCC000800000001 /* AppDelegate+Commands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000800000000 /* AppDelegate+Commands.swift */; };
 		CC000001CCCC001100000001 /* MVTimerController+Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001100000000 /* MVTimerController+Templates.swift */; };
+		CC000001CCCC001200000001 /* MVClockControlButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001200000000 /* MVClockControlButton.swift */; };
 		CC000001CCCC001000000001 /* MVClockView+Title.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001000000000 /* MVClockView+Title.swift */; };
 		CC000001CCCC000900000001 /* ChildClockTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000900000000 /* ChildClockTemplate.swift */; };
 		DD000001DDDD000100000001 /* TimerScriptCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000000 /* TimerScriptCommand.swift */; };
@@ -98,6 +99,7 @@
 		CC000001CCCC000700000000 /* MVClockView+Labels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Labels.swift"; sourceTree = "<group>"; };
 		CC000001CCCC000800000000 /* AppDelegate+Commands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Commands.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001100000000 /* MVTimerController+Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTimerController+Templates.swift"; sourceTree = "<group>"; };
+		CC000001CCCC001200000000 /* MVClockControlButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockControlButton.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001000000000 /* MVClockView+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Title.swift"; sourceTree = "<group>"; };
 		CC000001CCCC000900000000 /* ChildClockTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChildClockTemplate.swift"; sourceTree = "<group>"; };
 		CC000010CCCC001000000000 /* TimerUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerUITestCase.swift; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 				CC000001CCCC000700000000 /* MVClockView+Labels.swift */,
 				CC000001CCCC000800000000 /* AppDelegate+Commands.swift */,
 				CC000001CCCC001100000000 /* MVTimerController+Templates.swift */,
+				CC000001CCCC001200000000 /* MVClockControlButton.swift */,
 				CC000001CCCC001000000000 /* MVClockView+Title.swift */,
 				CC000001CCCC000900000000 /* ChildClockTemplate.swift */,
 				AA000010AAAA001000000000 /* MVClockProgressView.swift */,
@@ -371,6 +374,7 @@
 				CC000001CCCC000700000001 /* MVClockView+Labels.swift in Sources */,
 				CC000001CCCC000800000001 /* AppDelegate+Commands.swift in Sources */,
 				CC000001CCCC001100000001 /* MVTimerController+Templates.swift in Sources */,
+				CC000001CCCC001200000001 /* MVClockControlButton.swift in Sources */,
 				CC000001CCCC001000000001 /* MVClockView+Title.swift in Sources */,
 				CC000001CCCC000900000001 /* ChildClockTemplate.swift in Sources */,
 				DD000001DDDD000100000001 /* TimerScriptCommand.swift in Sources */,

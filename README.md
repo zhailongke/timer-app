@@ -50,6 +50,8 @@ Enter digits to set minutes. A decimal point specifies seconds so `2.34` is 2 mi
 
 Timer opens in stopwatch mode by default; press <kbd>tab</kbd> to switch to countdown.
 
+Besides <kbd>enter</kbd>, you can **click the clock face** to start/pause, or use the **blue round button in the top-right corner**: it shows a pause symbol while the clock is running (click to pause) and a play symbol when it is stopped (click to resume). A child clock's name is drawn in white below the circle.
+
 ### Stopwatch mode
 
 | Key | Action |
