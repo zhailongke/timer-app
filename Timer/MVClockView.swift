@@ -5,6 +5,8 @@ final class MVClockView: NSView {
 
   /// 内部所有坐标都按这个尺寸设计，缩放窗口时靠 frame / bounds 的比值整体放大缩小
   static let designSize: CGFloat = 150
+  /// 回车键码；改名提交后要靠它认出那个漏下来的 keyUp
+  static let returnKeyCode: UInt16 = 36
   static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
   static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
 
@@ -84,21 +86,12 @@ final class MVClockView: NSView {
   /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
   let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
 
-  /// 名字右边的铅笔按钮：点它进入改名；只有能改名的子时钟才显示
-  let renameHintImageView: NSImageView = {
-    let view = NSImageView(frame: NSRect(x: 111, y: 1, width: 12, height: 14))
-    if let symbol = NSImage(systemSymbolName: "pencil", accessibilityDescription: "Rename") {
-      symbol.isTemplate = true
-      view.image = symbol
-    }
-    view.contentTintColor = .white
-    view.alphaValue = 0
-    return view
-  }()
+  /// 名字右边的改名按钮（蓝色圆点 + 铅笔）：点它进入改名；只有能改名的子时钟才显示
+  let renameButton = MVRenameButton(frame: NSRect(x: 111, y: 1, width: 14, height: 14))
 
-  /// 铅笔图标小，点击区域往外扩一圈，好点
-  var renameHintHitFrame: NSRect {
-    self.renameHintImageView.frame.insetBy(dx: -8, dy: -6)
+  /// 按钮小，点击区域往外扩一圈，好点
+  var renameHitFrame: NSRect {
+    self.renameButton.frame.insetBy(dx: -6, dy: -5)
   }
   /// 名字区域用来接「鼠标移入 / 移出」，好在悬停时提示可以改名
   var titleTrackingArea: NSTrackingArea?
@@ -131,14 +124,15 @@ final class MVClockView: NSView {
     get { self.titleLabel.string }
     set {
       self.titleLabel.string = newValue
-      self.layoutRenameHint()
+      self.layoutRenameButton()
     }
   }
   /// 子时钟可以改名（点名字右边的铅笔）；主时钟没有名字，不能改
   var isTitleEditable = false {
     didSet {
-      // 铅笔常驻但半透明，鼠标移上去才变亮
-      self.renameHintImageView.alphaValue = self.isTitleEditable ? 0.6 : 0
+      // 主时钟没有名字，按钮整个不出现；子时钟常驻但半透明，鼠标移上去才变亮
+      self.renameButton.isHidden = !self.isTitleEditable
+      self.renameButton.alphaValue = self.isTitleEditable ? 0.75 : 0
       if !self.isTitleEditable {
         self.titleLabel.isSelectable = false
       }
@@ -150,6 +144,8 @@ final class MVClockView: NSView {
   var titleBeforeEditing = ""
   /// 这一次点击只是为了给改名收尾，不要再顺手起停时钟
   var justEndedTitleEditing = false
+  /// 回车提交改名后，那个 keyUp 会漏到快捷键里被当成"起停"，下一次 keyUp 要丢掉
+  var swallowNextReturnKeyUp = false
   /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
   var onModeToggleRequest: (() -> Void)?
   var inDock: Bool = false {
@@ -227,11 +223,13 @@ final class MVClockView: NSView {
     self.addSubview(self.secondsLabel)
     self.addSubview(self.startTimeLabel)
     self.addSubview(self.titleLabel)
-    self.addSubview(self.renameHintImageView)
+    self.addSubview(self.renameButton)
     self.addSubview(self.controlButton)
     self.addSubview(self.titleInputField)
 
     self.titleInputField.delegate = self
+    self.renameButton.isHidden = true
+    self.renameButton.onTap = { [weak self] in self?.toggleTitleEditing() }
     self.controlButton.onTap = { [weak self] in self?.handleClick() }
     self.arrowView.isHidden = self.mode == .stopwatch
     self.startTimeLabel.string = ""
@@ -353,6 +351,10 @@ extension MVClockView {
     }
     // 改名时把点击交给输入框，好在里面放光标
     if view == self.titleInputField {
+      return view
+    }
+    // 改名按钮（含里面的铅笔图标）自己接点击
+    if view?.isDescendant(of: self.renameButton) == true {
       return view
     }
     // 控制按钮自己接点击，不再当作点时钟表面

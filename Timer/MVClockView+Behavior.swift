@@ -11,7 +11,7 @@ extension MVClockView {
     // 正在改名时点到输入框外面就收工，避免编辑状态卡住（卡住会让快捷键全部失效）
     if self.isEditingTitle {
       let point = self.convert(event.locationInWindow, from: nil)
-      if !self.titleInputField.frame.contains(point), !self.renameHintHitFrame.contains(point) {
+      if !self.titleInputField.frame.contains(point), !self.renameHitFrame.contains(point) {
         self.endTitleEditing()
         self.justEndedTitleEditing = true
       }
@@ -81,13 +81,9 @@ extension MVClockView {
   override func mouseUp(with event: NSEvent) {
     let point = self.convert(event.locationInWindow, from: nil)
 
-    // 名字右边的铅笔是改名按钮；已经在改名时再点一次就是「完成」
-    if self.isTitleEditable, self.renameHintHitFrame.contains(point) {
-      if self.isEditingTitle {
-        self.endTitleEditing()
-      } else {
-        self.beginTitleEditing()
-      }
+    // 按钮外圈那一点点也算子，点它等于点按钮
+    if self.isTitleEditable, self.renameHitFrame.contains(point) {
+      self.toggleTitleEditing()
       self.updateClockFaceView()
       return
     }
@@ -114,6 +110,12 @@ extension MVClockView {
   override func keyUp(with event: NSEvent) {
     // 正在改名时按键归输入框，不能当成时钟快捷键（否则打数字会改时长、s 会切模式）
     if self.isEditingTitle { return }
+
+    // 改名提交那一下的回车 keyUp 会漏到这儿（此时已经不在编辑态），别当成"起停"
+    if self.swallowNextReturnKeyUp {
+      self.swallowNextReturnKeyUp = false
+      if event.keyCode == Self.returnKeyCode { return }
+    }
 
     let modifiers = event.modifierFlags
     let chars = event.charactersIgnoringModifiers

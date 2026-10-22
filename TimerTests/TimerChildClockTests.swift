@@ -106,18 +106,19 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(view.mode, .countdown, "改名时打 s 不该切模式")
   }
 
-  func testRenameHintShowsOnlyForEditableTitle() {
+  func testRenameButtonShowsOnlyForEditableTitle() {
     let view = MVClockView()
-    XCTAssertEqual(view.renameHintImageView.alphaValue, 0)
+    XCTAssertTrue(view.renameButton.isHidden)
 
     view.isTitleEditable = true
-    XCTAssertGreaterThan(view.renameHintImageView.alphaValue, 0)
+    XCTAssertFalse(view.renameButton.isHidden)
+    XCTAssertGreaterThan(view.renameButton.alphaValue, 0)
 
     view.setTitleHovered(true)
-    XCTAssertEqual(view.renameHintImageView.alphaValue, 1)
+    XCTAssertEqual(view.renameButton.alphaValue, 1)
 
     view.setTitleHovered(false)
-    XCTAssertEqual(view.renameHintImageView.alphaValue, 0.6)
+    XCTAssertEqual(view.renameButton.alphaValue, 0.75)
   }
 
   /// 悬停 / 改名会换成 attributedStringValue，少了段落样式文字就会跳到左边
@@ -133,17 +134,65 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(style?.alignment, .center)
   }
 
-  /// 铅笔图标小，点区域要往外扩一圈
+  /// 按钮小，点区域要往外扩一圈
   func testRenameButtonHitAreaIsLargerThanIcon() {
     let view = MVClockView()
     view.isTitleEditable = true
     view.clockTitle = "数学"
 
-    let iconFrame = view.renameHintImageView.frame
-    let hitFrame = view.renameHintHitFrame
+    let buttonFrame = view.renameButton.frame
+    let hitFrame = view.renameHitFrame
 
-    XCTAssertTrue(hitFrame.contains(iconFrame.origin))
-    XCTAssertGreaterThan(hitFrame.width, iconFrame.width)
+    XCTAssertTrue(hitFrame.contains(buttonFrame.origin))
+    XCTAssertGreaterThan(hitFrame.width, buttonFrame.width)
+  }
+
+  /// 输入框默认短短一个，名字长了跟着变宽，但不超出名字那一行的宽度
+  func testTitleInputWidthAdaptsToDraft() {
+    let view = MVClockView()
+    view.isTitleEditable = true
+    view.clockTitle = "数学"
+    view.beginTitleEditing()
+
+    let shortWidth = view.titleInputField.frame.width
+
+    view.titleDraft = "这是一个很长很长很长的名字"
+    view.controlTextDidChange(
+      Notification(name: NSControl.textDidChangeNotification, object: view.titleInputField)
+    )
+
+    XCTAssertGreaterThan(view.titleInputField.frame.width, shortWidth)
+    XCTAssertLessThanOrEqual(view.titleInputField.frame.width, view.titleLabel.frame.width)
+  }
+
+  /// 回车提交后漏下来的那个 keyUp 不能再去起停时钟
+  func testReturnAfterRenameDoesNotToggleClock() {
+    let view = MVClockView()
+    view.setMode(.stopwatch)
+    view.isTitleEditable = true
+    view.clockTitle = "数学"
+    view.beginTitleEditing()
+    view.swallowNextReturnKeyUp = true
+    view.endTitleEditing()
+
+    guard let event = NSEvent.keyEvent(
+      with: .keyUp,
+      location: .zero,
+      modifierFlags: [],
+      timestamp: 0,
+      windowNumber: 0,
+      context: nil,
+      characters: "\r",
+      charactersIgnoringModifiers: "\r",
+      isARepeat: false,
+      keyCode: MVClockView.returnKeyCode
+    ) else {
+      XCTFail("构造回车事件失败")
+      return
+    }
+    view.keyUp(with: event)
+
+    XCTAssertNil(view.timerTask, "回车提交不该顺手起停时钟")
   }
 
   func testChildTitleIsWhite() {

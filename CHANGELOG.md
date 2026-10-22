@@ -22,7 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Renaming is now triggered by the pencil button beside the name instead of double-clicking (double-click left the field stuck in edit mode, which killed the keyboard shortcuts)
 - Hovering the name no longer makes it jump to the left
 - Renaming swaps in a real `NSTextField` over the same spot instead of making the label editable in place: clicking the pencil now always gives a working input field with a visible box, select-all, enter to confirm, esc to cancel
-- The click that ends a rename no longer also starts/stops the clock: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)
+- The click that ends a rename no longer also starts/stops the clock
+- The rename affordance is now a blue round button (pencil symbol) aligned with the name text, matching the top-right pause button
+- The rename input field starts short and grows with the typed name instead of always spanning the full width
+- Pressing enter to confirm a rename no longer leaks its key-up to the clock and toggles start/stop: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)
 - The pencil click ends an in-progress rename instead of doing nothing, and a rename that fails to focus the field rolls back instead of leaving a stuck edit state
 - Renaming no longer leaks keys to the clock shortcuts: digits / s / enter typed in the title field stay in the field
 - A dim pencil beside a child clock's name hints that it is editable; hovering brightens the pencil and underlines the name
