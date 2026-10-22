@@ -166,7 +166,7 @@ final class TimerTemplateTests: XCTestCase {
     view.beginTitleEditing()
     XCTAssertTrue(view.isEditingTitle)
 
-    view.titleLabel.string = "   "
+    view.titleDraft = "   "
     view.endTitleEditing()
 
     XCTAssertEqual(view.clockTitle, "数学", "清空输入就回滚到原来的名字")
@@ -179,7 +179,7 @@ final class TimerTemplateTests: XCTestCase {
     view.clockTitle = "子时钟1"
 
     view.beginTitleEditing()
-    view.titleLabel.string = "英语"
+    view.titleDraft = "英语"
     view.endTitleEditing()
 
     XCTAssertEqual(view.clockTitle, "英语")

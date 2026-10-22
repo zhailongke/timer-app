@@ -6,11 +6,14 @@ extension MVClockView {
   override func mouseDown(with event: NSEvent) {
     self.didDrag = false
 
-    // 正在改名时点到别处就收工，避免编辑状态卡住（卡住会让快捷键全部失效）
+    self.justEndedTitleEditing = false
+
+    // 正在改名时点到输入框外面就收工，避免编辑状态卡住（卡住会让快捷键全部失效）
     if self.isEditingTitle {
       let point = self.convert(event.locationInWindow, from: nil)
-      if !self.titleLabel.frame.contains(point), !self.renameHintHitFrame.contains(point) {
+      if !self.titleInputField.frame.contains(point), !self.renameHintHitFrame.contains(point) {
         self.endTitleEditing()
+        self.justEndedTitleEditing = true
       }
     }
 
@@ -91,6 +94,13 @@ extension MVClockView {
 
     // 名字在圆框外，点它不做事（不起停时钟，也不再双击改名）
     if self.isTitleEditable, self.titleLabel.frame.contains(point) {
+      self.updateClockFaceView()
+      return
+    }
+
+    // 这一下只是给改名收尾，别顺手把时钟也起停了
+    if self.justEndedTitleEditing {
+      self.justEndedTitleEditing = false
       self.updateClockFaceView()
       return
     }

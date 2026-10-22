@@ -172,7 +172,7 @@ final class MVTimerController: NSWindowController {
   private var isTypingInTitle: Bool {
     guard self.clockView.isEditingTitle else { return false }
     guard let responder = self.window?.firstResponder else { return true }
-    return responder === self.clockView.titleLabel || responder is NSText
+    return responder === self.clockView.titleInputField || responder is NSText
   }
 
   override func keyUp(with event: NSEvent) {

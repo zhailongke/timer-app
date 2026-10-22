@@ -64,6 +64,23 @@ final class MVClockView: NSView {
     return label
   }()
 
+  /// 改名字用的真输入框：点铅笔后盖在名字同一个位置，回车确认，esc 撤销
+  let titleInputField: NSTextField = {
+    let field = NSTextField(frame: NSRect(x: 6, y: 0, width: 138, height: 16))
+    field.font = NSFont.systemFont(ofSize: 10, weight: .medium)
+    field.alignment = .center
+    field.textColor = .white
+    field.isEditable = true
+    field.isSelectable = true
+    field.isBezeled = true
+    field.bezelStyle = .roundedBezel
+    field.drawsBackground = true
+    field.backgroundColor = NSColor(white: 1, alpha: 0.14)
+    field.focusRingType = .none
+    field.isHidden = true
+    return field
+  }()
+
   /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
   let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
 
@@ -128,9 +145,11 @@ final class MVClockView: NSView {
     }
   }
   /// 正在输入名字：此时点击不起停时钟、Tab 也不切模式
-  var isEditingTitle: Bool { self.titleLabel.isEditable }
+  var isEditingTitle: Bool { !self.titleInputField.isHidden }
   /// 改名前的值，名字清空时回滚到它
   var titleBeforeEditing = ""
+  /// 这一次点击只是为了给改名收尾，不要再顺手起停时钟
+  var justEndedTitleEditing = false
   /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
   var onModeToggleRequest: (() -> Void)?
   var inDock: Bool = false {
@@ -210,7 +229,9 @@ final class MVClockView: NSView {
     self.addSubview(self.titleLabel)
     self.addSubview(self.renameHintImageView)
     self.addSubview(self.controlButton)
+    self.addSubview(self.titleInputField)
 
+    self.titleInputField.delegate = self
     self.controlButton.onTap = { [weak self] in self?.handleClick() }
     self.arrowView.isHidden = self.mode == .stopwatch
     self.startTimeLabel.string = ""
@@ -331,7 +352,7 @@ extension MVClockView {
       return view
     }
     // 改名时把点击交给输入框，好在里面放光标
-    if view == self.titleLabel {
+    if view == self.titleInputField {
       return view
     }
     // 控制按钮自己接点击，不再当作点时钟表面

@@ -2,73 +2,78 @@ import AppKit
 
 // MARK: - 子时钟改名
 
-/// 点名字右边的铅笔进入编辑；回车或点到别处结束，esc 撤销
+/// 点名字右边的铅笔 → 同一个位置盖一个真输入框；回车确认，esc 撤销，点别处也算确认
 extension MVClockView: NSTextFieldDelegate {
+  /// 输入框里正在敲的内容
+  var titleDraft: String {
+    get { self.titleInputField.stringValue }
+    set { self.titleInputField.stringValue = newValue }
+  }
+
   func beginTitleEditing() {
     guard self.isTitleEditable, !self.isEditingTitle else { return }
 
     self.titleBeforeEditing = self.clockTitle
-    self.titleLabel.isEditable = true
-    self.titleLabel.isSelectable = true
-    self.titleLabel.delegate = self
+    // 盖在名字正上方，位置尺寸对齐，看着就是原地变成输入框
+    self.titleInputField.frame = NSRect(
+      x: self.titleLabel.frame.minX,
+      y: self.titleLabel.frame.midY - 8,
+      width: self.titleLabel.frame.width,
+      height: 16
+    )
+    self.titleDraft = self.clockTitle
+    self.titleLabel.isHidden = true
+    self.titleInputField.isHidden = false
     self.renameHintImageView.alphaValue = 0
-    self.setTitleUnderlined(false)
 
-    // 面板可能不是 key window，那时 makeFirstResponder 会悄悄失败；
-    // 没真的进到编辑态就回滚，绝不留一个「正在编辑」却打不了字的假状态
     if let window = self.window {
       if !window.isKeyWindow { window.makeKey() }
-      window.makeFirstResponder(self.titleLabel)
-
-      let editingStarted =
-        self.titleLabel.currentEditor() != nil
-        || window.firstResponder === self.titleLabel
-        || window.firstResponder is NSText
-      guard editingStarted else {
-        self.titleLabel.isEditable = false
-        self.titleLabel.isSelectable = self.isTitleEditable
-        self.setTitleHovered(false)
-        return
-      }
+      window.makeFirstResponder(self.titleInputField)
     }
-
-    self.titleLabel.selectText(nil)
+    // 全选，直接打字就替掉旧名字
+    self.titleInputField.currentEditor()?.selectAll(nil)
   }
 
   func endTitleEditing() {
     guard self.isEditingTitle else { return }
 
-    // 先关掉可编辑，controlTextDidEndEditing 回来时不会重复走一遍
-    self.titleLabel.isEditable = false
-    self.titleLabel.isSelectable = self.isTitleEditable
+    // field editor 里的字还没刷回 field，得从编辑器读；读不到就用 field 的值
+    let draft = self.titleInputField.currentEditor()?.string ?? self.titleDraft
+    // 先收起来：endEditing 触发的回调回来时 isEditingTitle 已经是 false，不会重入
+    self.titleInputField.isHidden = true
     self.window?.endEditing(for: nil)
 
-    let edited = self.titleLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-    self.clockTitle = edited.isEmpty ? self.titleBeforeEditing : edited
+    self.titleLabel.isHidden = false
+    self.clockTitle = draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      ? self.titleBeforeEditing
+      : draft.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    if self.window?.firstResponder === self.titleLabel {
+    if self.window?.firstResponder is NSText {
       self.window?.makeFirstResponder(nil)
     }
     self.setTitleHovered(false)
     self.postAccessibilityValueChanged()
   }
 
-  func controlTextDidEndEditing(_: Notification) {
+  func controlTextDidEndEditing(_ notification: Notification) {
+    guard notification.object as? NSView === self.titleInputField else { return }
     self.endTitleEditing()
   }
 
   /// 回车确认，esc 撤销（输入框里的默认行为会被窗口的按键处理吃掉，这里自己接）
   func control(
-    _: NSControl,
+    _ control: NSControl,
     textView _: NSTextView,
     doCommandBy commandSelector: Selector
   ) -> Bool {
+    guard control === self.titleInputField else { return false }
+
     if commandSelector == #selector(NSResponder.insertNewline(_:)) {
       self.endTitleEditing()
       return true
     }
     if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
-      self.titleLabel.abortEditing()
+      self.titleInputField.abortEditing() // 丢掉输入，恢复成旧名字
       self.endTitleEditing()
       return true
     }
