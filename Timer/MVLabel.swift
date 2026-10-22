@@ -27,8 +27,9 @@ final class MVLabel: NSTextField {
     self.attributedStringValue = attributed
   }
 
-  override func hitTest(_: NSPoint) -> NSView? {
-    nil
+  override func hitTest(_ point: NSPoint) -> NSView? {
+    // 改名中的标题要接住点击（放光标）；其余标签一律透传给上层
+    self.isEditable ? super.hitTest(point) : nil
   }
 
   /// 文本长度会变时（如秒表的「时:分:秒」）用它挑一个放得下的最大等宽字号

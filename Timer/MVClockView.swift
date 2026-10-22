@@ -53,10 +53,12 @@ final class MVClockView: NSView {
     return label
   }()
 
-  /// 子时钟的层级标题，例如「子时钟1」；主时钟为空
-  private let titleLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 18, width: 150, height: 14))
+  /// 子时钟的名字，例如「子时钟1」；主时钟为空。
+  /// 放在圆框外（时钟圆的下沿 y=15 之下），不挡表盘上的数字
+  let titleLabel: MVLabel = {
+    let label = MVLabel(frame: NSRect(x: 6, y: 1, width: 138, height: 14))
     label.font = NSFont.systemFont(ofSize: 10, weight: .medium)
+    label.lineBreakMode = .byTruncatingTail
     label.alignment = .center
     label.textColor = MVResource.color("seconds")
     return label
@@ -90,6 +92,18 @@ final class MVClockView: NSView {
     get { self.titleLabel.string }
     set { self.titleLabel.string = newValue }
   }
+  /// 子时钟可以双击改名；主时钟没有名字，不能改
+  var isTitleEditable = false {
+    didSet {
+      if !self.isTitleEditable {
+        self.titleLabel.isSelectable = false
+      }
+    }
+  }
+  /// 正在输入名字：此时点击不起停时钟、Tab 也不切模式
+  var isEditingTitle: Bool { self.titleLabel.isEditable }
+  /// 改名前的值，名字清空时回滚到它
+  var titleBeforeEditing = ""
   /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
   var onModeToggleRequest: (() -> Void)?
   var inDock: Bool = false {
@@ -335,6 +349,10 @@ extension MVClockView {
   override func hitTest(_ aPoint: NSPoint) -> NSView? {
     let view = super.hitTest(aPoint)
     if view == self.arrowView {
+      return view
+    }
+    // 改名时把点击交给输入框，好在里面放光标
+    if view == self.titleLabel {
       return view
     }
     if view != nil {

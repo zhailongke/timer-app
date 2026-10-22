@@ -44,6 +44,16 @@ extension MVClockView {
 
   override func mouseUp(with event: NSEvent) {
     let point = self.convert(event.locationInWindow, from: nil)
+
+    // 名字在圆框外，点它不起停时钟；双击才进入改名
+    if self.isTitleEditable, self.titleLabel.frame.contains(point) {
+      if event.clickCount == 2 {
+        self.beginTitleEditing()
+      }
+      self.updateClockFaceView()
+      return
+    }
+
     if self.hitTest(point) == self, !self.didDrag {
       self.handleClick()
     }

@@ -49,6 +49,15 @@ enum TimerLogic {
     return String(format: "%d:%02d:%02d", total / 3_600, (total % 3_600) / 60, total % 60)
   }
 
+  /// 时长展示，例如 25:00 / 1:30:00
+  static func durationDisplayString(seconds: CGFloat) -> String {
+    let total = max(0, Int(seconds))
+    if total >= 3_600 {
+      return String(format: "%d:%02d:%02d", total / 3_600, (total % 3_600) / 60, total % 60)
+    }
+    return String(format: "%d:%02d", total / 60, total % 60)
+  }
+
   static func badgeString(minutes: Int, seconds: Int) -> String {
     String(format: "%02d:%02d", minutes, seconds)
   }

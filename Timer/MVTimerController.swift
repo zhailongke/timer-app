@@ -64,6 +64,7 @@ final class MVTimerController: NSWindowController {
       parent.childControllers.append(self)
       self.clockView.parentClockView = parent.clockView
       self.clockView.clockTitle = "子时钟\(self.depth)"
+      self.clockView.isTitleEditable = true
       self.windowFrameAutosaveName = ""
       window.setFrameOrigin(Self.originForChild(of: parent))
     }
@@ -133,9 +134,18 @@ final class MVTimerController: NSWindowController {
     }
   }
 
-  /// 右键「添加子时钟」：新建一个下级窗口，外观功能一致、独立计时
+  /// 是不是子时钟（有上级）；只有子时钟有名字、能改名、能存模板
+  var isChild: Bool { self.parentController != nil }
+
+  /// 右键「子时钟 ▸ 添加新的子时钟」：新建一个下级窗口，外观功能一致、独立计时
   @objc func addChildClock(_: Any?) {
-    guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
+    self.makeChildClock()
+  }
+
+  /// 新建一个子时钟并登记；名字默认「子时钟N」，秒表模式直接起跑
+  @discardableResult
+  func makeChildClock() -> MVTimerController? {
+    guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return nil }
 
     let child = MVTimerController(parent: self)
     appDelegate.registerController(child)
@@ -144,6 +154,7 @@ final class MVTimerController: NSWindowController {
     if child.clockView.mode == .stopwatch {
       child.clockView.start()
     }
+    return child
   }
 
   /// 关闭自己及所有下级；上级不受影响
@@ -172,6 +183,8 @@ final class MVTimerController: NSWindowController {
 
   /// Tab / s 键切换倒计时与秒表，实际切换统一交给 AppDelegate（含窗口置顶）
   func toggleMode() {
+    // 正在改名字时 Tab 归输入框，不要切模式
+    guard !self.clockView.isEditingTitle else { return }
     self.clockView.onModeToggleRequest?()
   }
 

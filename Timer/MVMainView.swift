@@ -7,7 +7,10 @@ final class MVMainView: NSView {
   ])
 
   weak var controller: MVTimerController? {
-    didSet { self.addChildMenuItem.target = self.controller }
+    didSet {
+      self.addChildMenuItem.target = self.controller
+      self.saveTemplateMenuItem.target = self.controller
+    }
   }
 
   weak var clockView: MVClockView? {
@@ -16,6 +19,9 @@ final class MVMainView: NSView {
 
   private let contextMenu = NSMenu(title: "菜单")
   private(set) var menuItem: NSMenuItem?
+
+  /// 计时模式：倒计时 / 秒表两个开关收在同一个子菜单里
+  private let modeMenuItem = NSMenuItem(title: "计时模式", action: nil, keyEquivalent: "")
 
   private let countdownMenuItem = NSMenuItem(
     title: "倒计时模式",
@@ -29,9 +35,22 @@ final class MVMainView: NSView {
     keyEquivalent: ""
   )
 
+  /// 子时钟：新建、按模板新建、把当前子时钟存成模板
+  private let childMenuItem = NSMenuItem(title: "子时钟", action: nil, keyEquivalent: "")
+
   private let addChildMenuItem = NSMenuItem(
-    title: "添加子时钟",
+    title: "添加新的子时钟",
     action: #selector(MVTimerController.addChildClock(_:)),
+    keyEquivalent: ""
+  )
+
+  private let templateMenuItem = NSMenuItem(title: "从模板选择", action: nil, keyEquivalent: "")
+  private let templateMenu = NSMenu(title: "从模板选择")
+  private let childMenuSeparator = NSMenuItem.separator()
+
+  private let saveTemplateMenuItem = NSMenuItem(
+    title: "保存为模板…",
+    action: #selector(MVTimerController.saveAsTemplate(_:)),
     keyEquivalent: ""
   )
 
@@ -58,12 +77,41 @@ final class MVMainView: NSView {
       action: #selector(self.toggleShowInDock),
       keyEquivalent: ""
     )
-    let submenu = NSMenu()
     let menuItemSoundChoice = NSMenuItem(
       title: "提示音",
       action: nil,
       keyEquivalent: ""
     )
+
+    let modeMenu = NSMenu(title: "计时模式")
+    modeMenu.addItem(self.countdownMenuItem)
+    modeMenu.addItem(self.stopwatchMenuItem)
+
+    let childMenu = NSMenu(title: "子时钟")
+    childMenu.addItem(self.addChildMenuItem)
+    childMenu.addItem(self.templateMenuItem)
+    childMenu.addItem(self.childMenuSeparator)
+    childMenu.addItem(self.saveTemplateMenuItem)
+    childMenu.setSubmenu(self.templateMenu, for: self.templateMenuItem)
+
+    self.contextMenu.addItem(self.modeMenuItem)
+    self.contextMenu.addItem(self.childMenuItem)
+    if let menuItem = self.menuItem {
+      self.contextMenu.addItem(menuItem)
+    }
+    self.contextMenu.addItem(menuItemSoundChoice)
+    self.contextMenu.setSubmenu(self.soundMenu(), for: menuItemSoundChoice)
+    self.contextMenu.setSubmenu(modeMenu, for: self.modeMenuItem)
+    self.contextMenu.setSubmenu(childMenu, for: self.childMenuItem)
+    self.contextMenu.delegate = self
+  }
+
+  required init?(coder _: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  private func soundMenu() -> NSMenu {
+    let menu = NSMenu(title: "提示音")
     let soundOptions = [
       (title: "提示音 1", value: 0),
       (title: "提示音 2", value: 1),
@@ -72,25 +120,13 @@ final class MVMainView: NSView {
     ]
     let savedSoundIndex = UserDefaults.standard.integer(forKey: MVUserDefaultsKeys.soundIndex)
     for option in soundOptions {
-      let soundItem = NSMenuItem(title: option.title, action: #selector(self.pickSound), keyEquivalent: "")
-      soundItem.tag = option.value
-      soundItem.state = option.value == savedSoundIndex ? .on : .off
-      submenu.addItem(soundItem)
+      let item = NSMenuItem(title: option.title, action: #selector(self.pickSound(_:)), keyEquivalent: "")
+      item.target = self
+      item.tag = option.value
+      item.state = option.value == savedSoundIndex ? .on : .off
+      menu.addItem(item)
     }
-
-    self.contextMenu.addItem(self.countdownMenuItem)
-    self.contextMenu.addItem(self.stopwatchMenuItem)
-    self.contextMenu.addItem(self.addChildMenuItem)
-    if let menuItem = self.menuItem {
-      self.contextMenu.addItem(menuItem)
-    }
-    self.contextMenu.addItem(menuItemSoundChoice)
-    self.contextMenu.setSubmenu(submenu, for: menuItemSoundChoice)
-    self.contextMenu.delegate = self
-  }
-
-  required init?(coder _: NSCoder) {
-    fatalError("init(coder:) has not been implemented")
+    return menu
   }
 
   @objc func toggleShowInDock() {
@@ -155,5 +191,37 @@ extension MVMainView: NSMenuDelegate {
     guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
     self.countdownMenuItem.state = appDelegate.currentMode == .countdown ? .on : .off
     self.stopwatchMenuItem.state = appDelegate.currentMode == .stopwatch ? .on : .off
+
+    // 只有子时钟有名字，主时钟不显示「保存为模板」
+    let isChild = self.controller?.isChild ?? false
+    self.saveTemplateMenuItem.isHidden = !isChild
+    self.childMenuSeparator.isHidden = !isChild
+
+    self.rebuildTemplateMenu()
+  }
+
+  /// 模板列表每次开菜单重建，改名/新存都能立刻看到
+  private func rebuildTemplateMenu() {
+    self.templateMenu.removeAllItems()
+
+    let templates = MVTemplateStore.load()
+    guard !templates.isEmpty else {
+      let emptyItem = NSMenuItem(title: "暂无模板", action: nil, keyEquivalent: "")
+      emptyItem.isEnabled = false
+      self.templateMenu.addItem(emptyItem)
+      return
+    }
+
+    for template in templates {
+      let item = NSMenuItem(
+        title: template.name,
+        action: #selector(MVTimerController.addChildClockFromTemplate(_:)),
+        keyEquivalent: ""
+      )
+      item.target = self.controller
+      item.representedObject = template
+      item.toolTip = template.summary
+      self.templateMenu.addItem(item)
+    }
   }
 }

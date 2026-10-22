@@ -64,10 +64,19 @@ Once the stopwatch is running, the start time (e.g. `起始 21:30:45`) is shown 
 
 ### Child clocks
 
-Right-click a window and pick **添加子时钟** (Add child clock) to open a nested window. It looks and works exactly like the main window, keeps its own independent clock, and is labelled `子时钟1`, `子时钟2`, … by depth.
+Right-click a window and pick **子时钟 ▸ 添加新的子时钟** (Child clock ▸ Add new child clock) to open a nested window. It looks and works exactly like the main window, keeps its own independent clock, and is labelled `子时钟1`, `子时钟2`, … by depth. The name sits outside the clock circle, below the face.
 
 - Each clock starts and pauses on its own, so every clock has its own start time. A new child clock in stopwatch mode starts running immediately.
+- Double-click a child clock's name to rename it (press <kbd>enter</kbd> to confirm, <kbd>esc</kbd> to cancel). The name is used for notifications and the Dock badge.
 - Closing a child clock leaves its parent running; closing the main clock closes the whole chain.
 - A child clock's countdown can never be longer than its parent's — drag or type a longer duration and it is capped at the parent's duration.
 - When a child clock's countdown finishes, it closes itself together with its own children (the main clock just notifies you and stays open).
 - For now children can only be nested one under another; sibling clocks are not implemented yet.
+
+### Child clock templates
+
+Right-click a **child** clock and pick **子时钟 ▸ 保存为模板…**. A panel shows the template (name, mode, duration) and lets you change the name before saving.
+
+- A template remembers the name, the mode, and — for countdowns — the duration, plus whether a new clock should start running right away.
+- **子时钟 ▸ 从模板选择** lists every saved template; picking one creates a child clock with that name, mode and duration in one go.
+- Templates are stored in `UserDefaults`, so they survive a restart. Saving under an existing name replaces that template.
