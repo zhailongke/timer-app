@@ -8,10 +8,9 @@ extension AppDelegate {
     MVHistoryWindowController.shared.show()
   }
 
-  /// 直接退出时窗口不一定走 willClose，这里把还在的主时钟都记一笔，免得这次白跑
+  /// 退出 App：还在跑的记录都收尾（不然会一直挂着「至今」）
   func applicationWillTerminate(_: Notification) {
-    for controller in self.controllers where controller.parentController == nil {
-      controller.recordHistoryOnClose()
-    }
+    MVHistoryTracker.shared.finalizeAll()
+    MVHistoryTracker.shared.flush()
   }
 }

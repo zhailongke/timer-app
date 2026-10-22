@@ -1,12 +1,12 @@
 import AppKit
 
-/// 历史记录窗口：根一层是每次主时钟的记录，点进去是那一次记录下的子时钟记录，
-/// 再往下一层层点。选中一行可以改名、删除、看它的下级
+/// 历史记录窗口：根一层是每次主时钟的记录（正在跑的那条也在，时长会自己长），
+/// 点进去是那一次记录下的子时钟记录，再往下一层层点。
+/// 选中一行可以改名、删除、看它的下级
 @MainActor
 final class MVHistoryWindowController: NSWindowController {
   static let shared = MVHistoryWindowController()
 
-  private var records: [ClockRecord] = []
   /// 一层层点进来的记录 id；空就是根层（每次主时钟）
   private var path: [UUID] = []
 
@@ -30,6 +30,7 @@ final class MVHistoryWindowController: NSWindowController {
     window.isReleasedWhenClosed = false
     window.minSize = NSSize(width: 560, height: 300)
     super.init(window: window)
+    window.delegate = self
     self.buildContent()
   }
 
@@ -38,12 +39,14 @@ final class MVHistoryWindowController: NSWindowController {
   }
 
   func show() {
-    self.records = MVHistoryStore.load()
     self.path = []
     self.reload()
     self.window?.center()
     self.showWindow(nil)
     NSApplication.shared.activate(ignoringOtherApps: true)
+
+    // 计时中的记录每秒都在长，开着窗口就跟着刷
+    MVHistoryTracker.shared.onChange = { [weak self] in self?.refreshPreservingSelection() }
   }
 
   private func buildContent() {
@@ -108,7 +111,7 @@ final class MVHistoryWindowController: NSWindowController {
   // MARK: - 当前层级
 
   private var currentRecords: [ClockRecord] {
-    self.records.records(at: self.path)
+    MVHistoryTracker.shared.records.records(at: self.path)
   }
 
   private var selectedRecord: ClockRecord? {
@@ -119,7 +122,7 @@ final class MVHistoryWindowController: NSWindowController {
 
   private var pathText: String {
     var titles = ["历史记录"]
-    var level = self.records
+    var level = MVHistoryTracker.shared.records
     for id in self.path {
       guard let index = level.firstIndex(where: { $0.id == id }) else { break }
       titles.append(level[index].name)
@@ -128,9 +131,23 @@ final class MVHistoryWindowController: NSWindowController {
     return titles.joined(separator: " › ")
   }
 
-  private func reload() {
+  /// 计时中的记录每秒刷新；只重画，不动选中行与层级
+  private func refreshPreservingSelection() {
+    let selectedID = self.selectedRecord?.id
     self.tableView.reloadData()
 
+    if let selectedID, let row = self.currentRecords.firstIndex(where: { $0.id == selectedID }) {
+      self.tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+    }
+    self.updateControls()
+  }
+
+  private func reload() {
+    self.tableView.reloadData()
+    self.updateControls()
+  }
+
+  private func updateControls() {
     self.pathLabel.stringValue = self.pathText
     self.backButton.isEnabled = !self.path.isEmpty
 
@@ -140,7 +157,7 @@ final class MVHistoryWindowController: NSWindowController {
     self.deleteButton.isEnabled = record != nil
 
     self.hintLabel.stringValue = self.currentRecords.isEmpty
-      ? "还没有记录：关掉一个时钟就记一条，或右键选「记入历史」"
+      ? "还没有记录：一点开始计时就有，或右键选「记入历史」"
       : "双击一行可以看下级记录"
   }
 
@@ -177,16 +194,16 @@ final class MVHistoryWindowController: NSWindowController {
     guard alert.runModal() == .alertFirstButtonReturn else { return }
 
     let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-    let id = record.id
+    let recordID = record.id
     let path = self.path
-    MVHistoryStore.update { records in
+
+    MVHistoryTracker.shared.mutate { records in
       records.mutate(at: path) { level in
-        for index in level.indices where level[index].id == id {
-          level[index].name = name.isEmpty ? ClockRecord.defaultName(for: level[index].startDate) : name
+        level.update(id: recordID) { target in
+          target.name = name.isEmpty ? ClockRecord.defaultName(for: target.startDate) : name
         }
       }
     }
-    self.records = MVHistoryStore.load()
     self.reload()
   }
 
@@ -203,15 +220,21 @@ final class MVHistoryWindowController: NSWindowController {
 
     guard alert.runModal() == .alertFirstButtonReturn else { return }
 
-    let id = record.id
+    let recordID = record.id
     let path = self.path
-    MVHistoryStore.update { records in
+
+    MVHistoryTracker.shared.mutate { records in
       records.mutate(at: path) { level in
-        level.remove(id: id)
+        level.remove(id: recordID)
       }
     }
-    self.records = MVHistoryStore.load()
     self.reload()
+  }
+}
+
+extension MVHistoryWindowController: NSWindowDelegate {
+  func windowWillClose(_: Notification) {
+    MVHistoryTracker.shared.onChange = nil
   }
 }
 
@@ -247,9 +270,6 @@ extension MVHistoryWindowController: NSTableViewDataSource, NSTableViewDelegate 
   }
 
   func tableViewSelectionDidChange(_: Notification) {
-    let record = self.selectedRecord
-    self.openButton.isEnabled = record?.children.isEmpty == false
-    self.renameButton.isEnabled = record != nil
-    self.deleteButton.isEnabled = record != nil
+    self.updateControls()
   }
 }

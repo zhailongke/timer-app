@@ -94,6 +94,39 @@ extension Array where Element == ClockRecord {
     self[index].children.mutate(at: [UUID](path.dropFirst()), body)
   }
 
+  /// 挂到 parentID 那条记录下面；parentID 为 nil 就挂到根层（主时钟那一层）
+  mutating func append(_ record: ClockRecord, toParent parentID: UUID?) {
+    guard let parentID else {
+      self.append(record)
+      return
+    }
+    for index in self.indices {
+      if self[index].id == parentID {
+        self[index].children.append(record)
+        return
+      }
+      self[index].children.append(record, toParent: parentID)
+    }
+    // 上级记录已经被删掉了就落到根层，总比丢了好
+    self.append(record)
+  }
+
+  /// 按 id 改一条记录（含所有下级）
+  mutating func update(id: UUID, _ body: (inout ClockRecord) -> Void) {
+    for index in self.indices {
+      if self[index].id == id {
+        body(&self[index])
+        return
+      }
+      self[index].children.update(id: id, body)
+    }
+  }
+
+  func contains(id: UUID) -> Bool {
+    if self.contains(where: { $0.id == id }) { return true }
+    return self.contains { $0.children.contains(id: id) }
+  }
+
   /// 走到 path 指的那一级，把记录取出来
   func records(at path: [UUID]) -> [ClockRecord] {
     guard let head = path.first else { return self }
@@ -132,27 +165,11 @@ enum MVHistoryStore {
   }
 
   static func save(_ records: [ClockRecord], to defaults: UserDefaults = .standard) {
-    guard let data = try? JSONEncoder().encode(records) else { return }
-    defaults.set(data, forKey: MVUserDefaultsKeys.historyRecords)
-  }
-
-  /// 一条主时钟记录写完就追加进去（子时钟的记录跟着上级走，不单独进根层）
-  static func append(_ record: ClockRecord, to defaults: UserDefaults = .standard) {
-    var records = Self.load(from: defaults)
-    records.append(record)
-    if records.count > Self.limit {
-      records.removeFirst(records.count - Self.limit)
+    var trimmed = records
+    if trimmed.count > Self.limit {
+      trimmed.removeFirst(trimmed.count - Self.limit)
     }
-    Self.save(records, to: defaults)
-  }
-
-  /// 历史记录窗口里改名 / 删除后整体写回
-  static func update(
-    _ body: (inout [ClockRecord]) -> Void,
-    to defaults: UserDefaults = .standard
-  ) {
-    var records = Self.load(from: defaults)
-    body(&records)
-    Self.save(records, to: defaults)
+    guard let data = try? JSONEncoder().encode(trimmed) else { return }
+    defaults.set(data, forKey: MVUserDefaultsKeys.historyRecords)
   }
 }

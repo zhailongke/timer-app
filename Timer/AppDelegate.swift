@@ -24,6 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
   func applicationDidFinishLaunching(_: Notification) {
     MVMenu.installMainMenuIfNeeded()
+    // 计时一开始就有记录，之后每秒刷新时长
+    MVHistoryTracker.shared.startTicking()
 
     let controller = MVTimerController()
     self.registerController(controller)
@@ -147,7 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     else { return }
 
     // 关掉 = 这一段记录到此结束；要在摘掉上下级关系之前记，子时钟才知道挂到谁下面
-    controller.recordHistoryOnClose()
+    controller.finalizeHistoryRecord()
 
     // 关掉一个时钟，它的所有下级跟着关（主时钟关闭 → 整棵树关闭）
     for child in controller.childControllers where child.window != nil {

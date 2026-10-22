@@ -36,9 +36,9 @@ final class MVMainView: NSView {
     keyEquivalent: ""
   )
 
-  /// 不关闭也能先存一笔历史（结束时间记为「至今」）
+  /// 不关闭也能把这一段结算掉，立刻开新的一条
   private let recordHistoryMenuItem = NSMenuItem(
-    title: "记入历史",
+    title: "另起一条记录",
     action: #selector(MVTimerController.addHistoryRecord(_:)),
     keyEquivalent: ""
   )
@@ -119,7 +119,7 @@ final class MVMainView: NSView {
 
     self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
     self.historyMenuItem.target = NSApplication.shared.delegate
-    self.recordHistoryMenuItem.toolTip = "把这次计时存进历史，结束时间记为现在（显示「至今」）"
+    self.recordHistoryMenuItem.toolTip = "把这次计时结算成一条记录，立刻开始新的一条（不关闭时钟）"
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)

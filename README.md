@@ -89,8 +89,9 @@ Right-click a **child** clock and pick **子时钟 ▸ 保存为模板…**. A p
 
 Every clock session is recorded with its **start time, duration and end time**, named after its start time by default.
 
-- **Closing a clock ends one complete record**: the end time is when you closed it
-- To save a record without closing, pick **记入历史** — the end time is "now" and shows as 至今 ("until now"), which is handy for keeping the child clocks that are still running
+- **A record appears the moment you start timing**: the start time is when it started, the duration grows every second, and closing the clock ends it (the end time is set then)
+- **Creating a child clock attaches it under its parent's record**; if the parent hasn't started, its record is created first (nested, level by level), so the history always shows the whole tree as it is right now
+- To split a session, pick **另起一条记录**: the current record is settled and a new one starts immediately (no need to close the clock)
 - **历史记录…** opens a separate window (not a menu list). Its root level is one row per main clock session; **click into a row** to see the child clock records under it, and keep drilling down level by level
 - Select a row to **rename** or **delete** it; a 返回 button and a breadcrumb show where you are
 - A clock that never actually ran (under 1 second) and has no child records leaves nothing behind

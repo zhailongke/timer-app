@@ -233,6 +233,7 @@ extension MVClockView {
 extension MVClockView {
   func start() {
     if self.mode == .stopwatch {
+      self.onStart?()
       self.paused = false
       self.stop()
       self.stopwatchStartDate = Date()
@@ -247,7 +248,9 @@ extension MVClockView {
       return
     }
 
+    // 倒计时得真有时长才算起跑，没时长的空跑不记
     guard self.seconds > 0 else { return }
+    self.onStart?()
     self.lastTimerSeconds = self.seconds
 
     self.paused = false

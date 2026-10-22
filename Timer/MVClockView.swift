@@ -174,6 +174,8 @@ final class MVClockView: NSView {
     }
   }
   var onTimerComplete: (() -> Void)?
+  /// 真正起跑那一瞬间回调（秒表 / 有时长的倒计时），历史记录靠它记起始时间
+  var onStart: (() -> Void)?
   private var notificationTasks: [Task<Void, Never>] = []
   var currentTimeTask: Task<Void, Never>?
   var timerTask: Task<Void, Never>?
