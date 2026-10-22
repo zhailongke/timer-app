@@ -1,5 +1,7 @@
 # A simple Timer app for Mac
 
+[English](README.md) | [中文](README.zh-CN.md)
+
 <img src="/screenshots/light-mode.png?raw=true" width="262" align="right">
 
 <img src="/screenshots/dark-mode.png?raw=true" width="262" align="right">
@@ -12,7 +14,7 @@ When the time is up, a notification will show up with a nice sound.
 
 Create new timers with `CMD+N`.
 
-Press `S`, or right-click the window and pick **秒表模式** (Stopwatch Mode), to switch a window between countdown and stopwatch (count up). Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. While in stopwatch mode the window floats above all other windows — including full screen apps — so you can keep an eye on elapsed time.
+Press `Tab` (or `S`), or right-click the window and pick **秒表模式** (Stopwatch Mode), to switch a window between countdown and stopwatch (count up). Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. While in stopwatch mode the window floats above all other windows — including full screen apps — so you can keep an eye on elapsed time.
 
 Install as a [brew cask](https://caskroom.github.io) via 
 
@@ -44,7 +46,9 @@ Enter digits to set minutes. A decimal point specifies seconds so `2.34` is 2 mi
 | <kbd>-</kbd> or <kbd>↓</kbd> | Subtract a minute |
 | <kbd>shift</kbd>+<kbd>+</kbd> or <kbd>shift</kbd>+<kbd>↑</kbd> | Add 10 minutes |
 | <kbd>shift</kbd>+<kbd>-</kbd> or <kbd>shift</kbd>+<kbd>↓</kbd> | Subtract 10 minutes |
-| <kbd>s</kbd> | Toggle stopwatch mode |
+| <kbd>tab</kbd> or <kbd>s</kbd> | Toggle stopwatch mode |
+
+Timer opens in stopwatch mode by default; press <kbd>tab</kbd> to switch to countdown.
 
 ### Stopwatch mode
 
@@ -52,5 +56,6 @@ Enter digits to set minutes. A decimal point specifies seconds so `2.34` is 2 mi
 |-----|--------|
 | <kbd>enter</kbd> or <kbd>space</kbd> | Start, pause, resume |
 | <kbd>escape</kbd> | Reset to zero |
+| <kbd>tab</kbd> or <kbd>s</kbd> | Back to countdown mode |
 
 Digits, backspace, scroll wheel and ±minute keys are disabled in stopwatch mode — there is no duration to set. Elapsed time has no upper limit; the progress ring wraps around once per hour.
