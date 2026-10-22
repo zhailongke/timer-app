@@ -44,14 +44,26 @@ final class MVClockView: NSView {
     return label
   }()
 
+  /// 秒表开始计时后，在大号时间下方显示起跑时刻
+  private let startTimeLabel: MVLabel = {
+    let label = MVLabel(frame: NSRect(x: 0, y: 37, width: 150, height: 18))
+    label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+    label.alignment = .center
+    label.textColor = MVResource.color("seconds")
+    return label
+  }()
+
   private let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
   private let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
   private let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
-  private lazy var timerTimeLabelFormatter: DateFormatter = {
+  /// 顶部时钟用 jj:mm，秒表起始时刻用 jj:mm:ss，都跟随系统 12/24 小时制
+  private static func formatter(template: String) -> DateFormatter {
     let formatter = DateFormatter()
-    formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "jj:mm", options: 0, locale: Locale.current)
+    formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: template, options: 0, locale: Locale.current)
     return formatter
-  }()
+  }
+  private lazy var timerTimeLabelFormatter = MVClockView.formatter(template: "jj:mm")
+  private lazy var startTimeFormatter = MVClockView.formatter(template: "jj:mm:ss")
   var inputSeconds: Bool = false
   /// 默认秒表模式；秒表没有可调箭头，拖拽设定时长只在倒计时下有意义
   var mode: TimerMode = .stopwatch {
@@ -120,6 +132,8 @@ final class MVClockView: NSView {
   }
   var didDrag: Bool = false
   var stopwatchStartDate: Date?
+  /// 本次计时的真正起点，暂停再继续不会变
+  var stopwatchOriginDate: Date?
   var stopwatchAccumulated: CGFloat = 0
 
   // MARK: -
@@ -140,8 +154,10 @@ final class MVClockView: NSView {
     self.addSubview(self.timerTimeLabel)
     self.addSubview(self.minutesLabel)
     self.addSubview(self.secondsLabel)
+    self.addSubview(self.startTimeLabel)
 
     self.arrowView.isHidden = self.mode == .stopwatch
+    self.startTimeLabel.string = ""
     self.updateClockFaceView()
     self.updateAllViews()
   }
@@ -260,6 +276,7 @@ extension MVClockView {
     self.seconds = 0
     self.stopwatchAccumulated = 0
     self.stopwatchStartDate = nil
+    self.stopwatchOriginDate = nil
     self.inputSeconds = false
     self.updateTimerTime()
     self.updateAllViews()
@@ -296,6 +313,7 @@ extension MVClockView {
       return
     }
 
+    self.startTimeLabel.string = ""
     self.minutesLabel.font = Self.minutesFont
     self.minutesLabel.string = TimerLogic.minutesDisplayString(seconds: self.seconds)
     let suffixWidth: CGFloat = self.seconds < 60 ? self.minutesLabelSecondsSuffixWidth : self.minutesLabelSuffixWidth
@@ -326,26 +344,17 @@ extension MVClockView {
     var frame = self.minutesLabel.frame
     frame.origin.x = round((self.bounds.width - frame.size.width) / 2)
     self.minutesLabel.frame = frame
+
+    self.updateStartTimeLabel()
   }
 
-  private func updateBadge() {
-    if self.inDock {
-      if self.timerTask != nil || self.paused {
-        if self.mode == .stopwatch, self.seconds >= 3_600 {
-          NSApplication.shared.dockTile.badgeLabel = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
-          return
-        }
-        let badgeSeconds = Int(self.seconds.truncatingRemainder(dividingBy: 60))
-        let badgeMinutes = Int(self.minutes) % 60
-        NSApplication.shared.dockTile.badgeLabel = TimerLogic.badgeString(minutes: badgeMinutes, seconds: badgeSeconds)
-      } else {
-        self.removeBadge()
-      }
+  /// 只在秒表跑起来（含暂停）之后显示起始时刻，归零/切模式后清空
+  func updateStartTimeLabel() {
+    guard let origin = self.stopwatchOriginDate, self.timerTask != nil || self.paused else {
+      self.startTimeLabel.string = ""
+      return
     }
-  }
-
-  func removeBadge() {
-    NSApplication.shared.dockTile.badgeLabel = ""
+    self.startTimeLabel.string = "起始 \(self.startTimeFormatter.string(from: origin))"
   }
 
   private func updateTimeLabel() {

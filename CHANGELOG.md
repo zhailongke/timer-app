@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Stopwatch mode: press `Tab` (or `S`), or right-click the window and choose 秒表模式, to count up instead of down (#stopwatch)
 - Stopwatch is now the default mode at launch; `Tab` switches back to countdown
 - Chinese README (`README.zh-CN.md`), linked from the English one
+- Stopwatch shows the start time (`起始 21:30:45`) under the elapsed time once running
 - Stopwatch shows elapsed time as 时:分:秒 (`1:05:30`), with the font auto-shrinking to fit; dock badge and VoiceOver include hours past 1h
 - Chinese UI: main menu, context menu and VoiceOver descriptions are now in Chinese
 - Switching between countdown and stopwatch resets the clock

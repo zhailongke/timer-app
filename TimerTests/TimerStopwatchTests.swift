@@ -84,6 +84,26 @@ final class TimerStopwatchTests: XCTestCase {
     XCTAssertEqual(view.seconds, 0)
   }
 
+  func testOriginDateRecordedOnStartAndClearedOnReset() {
+    let view = MVClockView()
+
+    XCTAssertNil(view.stopwatchOriginDate)
+
+    view.handleClick() // 起跑
+    let origin = view.stopwatchOriginDate
+    XCTAssertNotNil(origin)
+
+    // 暂停再继续，起点不变
+    view.handleClick()
+    view.handleClick()
+    XCTAssertEqual(view.stopwatchOriginDate, origin)
+
+    view.keyUp(with: Self.keyEvent(characters: "\u{1B}")) // escape 归零
+    XCTAssertNil(view.stopwatchOriginDate)
+
+    view.stop()
+  }
+
   private static func keyEvent(characters: String) -> NSEvent {
     guard let event = NSEvent.keyEvent(
       with: .keyUp,

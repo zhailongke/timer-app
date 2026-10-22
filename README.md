@@ -59,3 +59,5 @@ Timer opens in stopwatch mode by default; press <kbd>tab</kbd> to switch to coun
 | <kbd>tab</kbd> or <kbd>s</kbd> | Back to countdown mode |
 
 Digits, backspace, scroll wheel and ±minute keys are disabled in stopwatch mode — there is no duration to set. Elapsed time has no upper limit; the progress ring wraps around once per hour.
+
+Once the stopwatch is running, the start time (e.g. `起始 21:30:45`) is shown under the elapsed time. It stays at the original start when you pause and resume, and disappears on reset.

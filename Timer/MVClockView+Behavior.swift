@@ -121,6 +121,7 @@ extension MVClockView {
     self.seconds = 0
     self.stopwatchAccumulated = 0
     self.stopwatchStartDate = nil
+    self.stopwatchOriginDate = nil
     self.updateTimerTime()
     self.inputSeconds = false
   }
@@ -167,8 +168,13 @@ extension MVClockView {
       self.paused = false
       self.stop()
       self.stopwatchStartDate = Date()
+      // 暂停再继续不更新起点，起始时间保持第一次起跑的时刻
+      if self.stopwatchOriginDate == nil {
+        self.stopwatchOriginDate = self.stopwatchStartDate
+      }
       self.updateTimerTime()
       self.startTicker()
+      self.updateStartTimeLabel()
       return
     }
 
@@ -292,5 +298,31 @@ extension MVClockView {
 
   func postAccessibilityValueChanged() {
     NSAccessibility.post(element: self, notification: .valueChanged)
+  }
+}
+
+// MARK: - Dock 角标
+
+extension MVClockView {
+  func updateBadge() {
+    guard self.inDock else { return }
+
+    guard self.timerTask != nil || self.paused else {
+      self.removeBadge()
+      return
+    }
+
+    if self.mode == .stopwatch, self.seconds >= 3_600 {
+      NSApplication.shared.dockTile.badgeLabel = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
+      return
+    }
+
+    let badgeSeconds = Int(self.seconds.truncatingRemainder(dividingBy: 60))
+    let badgeMinutes = Int(self.minutes) % 60
+    NSApplication.shared.dockTile.badgeLabel = TimerLogic.badgeString(minutes: badgeMinutes, seconds: badgeSeconds)
+  }
+
+  func removeBadge() {
+    NSApplication.shared.dockTile.badgeLabel = ""
   }
 }
