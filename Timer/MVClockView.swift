@@ -89,6 +89,9 @@ final class MVClockView: NSView {
   /// 名字右边的改名按钮（蓝色圆点 + 铅笔）：点它进入改名；只有能改名的子时钟才显示
   let renameButton = MVRenameButton(frame: NSRect(x: 111, y: 1, width: 14, height: 14))
 
+  /// 左下角的置顶按钮：和改名按钮对称，管这个窗口浮不浮在其他窗口之上
+  let pinButton = MVPinButton(frame: NSRect(x: 8, y: 1, width: 14, height: 14))
+
   /// 按钮小，点击区域往外扩一圈，好点
   var renameHitFrame: NSRect {
     self.renameButton.frame.insetBy(dx: -6, dy: -5)
@@ -153,6 +156,8 @@ final class MVClockView: NSView {
   var onModeToggleRequest: (() -> Void)?
   /// 模式真的变了（Tab / s / 右键 / 模板都会走这里），用来同步窗口置顶
   var onModeChanged: ((TimerMode) -> Void)?
+  /// 点左下角的图钉：切换「窗口置顶」
+  var onToggleStaysOnTop: (() -> Void)?
   var inDock: Bool = false {
     didSet {
       if !self.inDock {
@@ -231,6 +236,7 @@ final class MVClockView: NSView {
     self.addSubview(self.startTimeLabel)
     self.addSubview(self.titleLabel)
     self.addSubview(self.renameButton)
+    self.addSubview(self.pinButton)
     self.addSubview(self.controlButton)
     self.addSubview(self.titleInputField)
 
@@ -238,6 +244,7 @@ final class MVClockView: NSView {
     self.renameButton.isHidden = true
     self.renameButton.onTap = { [weak self] in self?.toggleTitleEditing() }
     self.controlButton.onTap = { [weak self] in self?.handleClick() }
+    self.pinButton.onTap = { [weak self] in self?.onToggleStaysOnTop?() }
     self.arrowView.isHidden = self.mode == .stopwatch
     self.startTimeLabel.string = ""
     self.updateClockFaceView()

@@ -14,7 +14,7 @@ When the time is up, a notification will show up with a nice sound.
 
 Create new timers with `CMD+N`.
 
-Press `Tab` (or `S`), or right-click the window and pick **倒计时模式** (Countdown Mode) / **秒表模式** (Stopwatch Mode), to switch that window between countdown and stopwatch (count up). Each clock keeps its own mode: switching a child clock never touches its parent. Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. While in stopwatch mode the window floats above all other windows — including full screen apps — so you can keep an eye on elapsed time.
+Press `Tab` (or `S`), or right-click the window and pick **倒计时模式** (Countdown Mode) / **秒表模式** (Stopwatch Mode), to switch that window between countdown and stopwatch (count up). Each clock keeps its own mode: switching a child clock never touches its parent. Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. Windows float above all other windows — including full screen apps — so you can keep an eye on the time; click the pin button at the bottom left (or **窗口 ▸ 窗口置顶**) to turn that off and let other windows cover them.
 
 Install as a [brew cask](https://caskroom.github.io) via 
 

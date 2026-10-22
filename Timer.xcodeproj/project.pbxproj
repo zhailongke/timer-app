@@ -38,6 +38,7 @@
 		CC000001CCCC001300000001 /* MVClockView+Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001300000000 /* MVClockView+Layout.swift */; };
 		CC000001CCCC001400000001 /* MVClockView+Accessibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001400000000 /* MVClockView+Accessibility.swift */; };
 		CC000001CCCC001500000001 /* MVRenameButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001500000000 /* MVRenameButton.swift */; };
+		CC0001A0CCCC01A000000001 /* MVPinButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A0CCCC01A000000000 /* MVPinButton.swift */; };
 		CC000001CCCC001700000001 /* MVTemplateEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000001 /* MVTemplateEditor.swift */; };
 		CC000001CCCC001700000002 /* MVTemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000002 /* MVTemplateManager.swift */; };
 		CC000001CCCC001700000003 /* AppDelegate+Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000003 /* AppDelegate+Templates.swift */; };
@@ -62,6 +63,7 @@
 		CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001800000000 /* TimerHistoryTests.swift */; };
 		CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000017CCCC001700000000 /* TimerChildClockTests.swift */; };
 		CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */; };
+		CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +119,7 @@
 		CC000001CCCC001300000000 /* MVClockView+Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Layout.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001400000000 /* MVClockView+Accessibility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Accessibility.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001500000000 /* MVRenameButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVRenameButton.swift"; sourceTree = "<group>"; };
+		CC0001A0CCCC01A000000000 /* MVPinButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVPinButton.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001600000001 /* MVTemplateEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTemplateEditor.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001600000002 /* MVTemplateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTemplateManager.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001600000003 /* AppDelegate+Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Templates.swift"; sourceTree = "<group>"; };
@@ -139,6 +142,7 @@
 		CC000016CCCC001800000000 /* TimerHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerHistoryTests.swift; sourceTree = "<group>"; };
 		CC000017CCCC001700000000 /* TimerChildClockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChildClockTests.swift; sourceTree = "<group>"; };
 		CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerModeIndependenceTests.swift; sourceTree = "<group>"; };
+		CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWindowControlsTests.swift; sourceTree = "<group>"; };
 		DD000001DDDD000100000000 /* TimerScriptCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerScriptCommand.swift; sourceTree = "<group>"; };
 		DD000002DDDD000200000000 /* Timer.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Timer.sdef; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -204,6 +208,8 @@
 				CC000001CCCC001300000000 /* MVClockView+Layout.swift */,
 				CC000001CCCC001400000000 /* MVClockView+Accessibility.swift */,
 				CC000001CCCC001500000000 /* MVRenameButton.swift */,
+				CC000001CCCC001500000000 /* MVRenameButton.swift */,
+				CC0001A0CCCC01A000000000 /* MVPinButton.swift */,
 				CC000001CCCC001600000001 /* MVTemplateEditor.swift */,
 				CC000001CCCC001600000002 /* MVTemplateManager.swift */,
 				CC000001CCCC001600000003 /* AppDelegate+Templates.swift */,
@@ -248,6 +254,7 @@
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */,
+				CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */,
 			);
 			path = TimerTests;
 			sourceTree = "<group>";
@@ -421,6 +428,8 @@
 				CC000001CCCC001300000001 /* MVClockView+Layout.swift in Sources */,
 				CC000001CCCC001400000001 /* MVClockView+Accessibility.swift in Sources */,
 				CC000001CCCC001500000001 /* MVRenameButton.swift in Sources */,
+				CC000001CCCC001500000001 /* MVRenameButton.swift in Sources */,
+				CC0001A0CCCC01A000000001 /* MVPinButton.swift in Sources */,
 				CC000001CCCC001700000001 /* MVTemplateEditor.swift in Sources */,
 				CC000001CCCC001700000002 /* MVTemplateManager.swift in Sources */,
 				CC000001CCCC001700000003 /* AppDelegate+Templates.swift in Sources */,
@@ -451,6 +460,7 @@
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */,
+				CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

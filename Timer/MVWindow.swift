@@ -4,7 +4,7 @@ final class MVWindow: NSWindow {
   convenience init(mainView: NSView) {
     // fullSizeContentView 让内容视图铺满整个窗口（含标题栏区域），
     // 这样时钟可以随意缩放，不会被标题栏容器裁掉。
-    let styleMask: NSWindow.StyleMask = [.closable, .titled, .resizable, .fullSizeContentView]
+    let styleMask: NSWindow.StyleMask = [.closable, .miniaturizable, .titled, .resizable, .fullSizeContentView]
     let size: CGFloat = 150.0
 
     let screenFrame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
@@ -34,14 +34,15 @@ final class MVWindow: NSWindow {
     mainView.autoresizingMask = [.width, .height]
     self.contentView = mainView
 
-    // Hide the buttons we don't use; the close button keeps working over the clock face
-    self.standardWindowButton(.miniaturizeButton)?.isHidden = true
+    // 只留关闭和最小化；缩放按钮收起（窗口保持正方形，缩放没意义）
     self.standardWindowButton(.zoomButton)?.isHidden = true
 
-    if let closeButton = self.standardWindowButton(.closeButton) {
-      var closeFrame = closeButton.frame
-      closeFrame.origin.y -= 2
-      closeButton.frame = closeFrame
+    // 两个留下的按钮一起往下挪一点，视觉上跟时钟对齐
+    for button in [self.standardWindowButton(.closeButton), self.standardWindowButton(.miniaturizeButton)] {
+      guard let button else { continue }
+      var frame = button.frame
+      frame.origin.y -= 2
+      button.frame = frame
     }
   }
 

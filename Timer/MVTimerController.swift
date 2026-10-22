@@ -52,6 +52,9 @@ final class MVTimerController: NSWindowController {
     // 模式是这个时钟自己的事：Tab / s 只切自己，切完同步一下这个窗口的置顶
     self.clockView.onModeToggleRequest = { [weak self] in self?.toggleMode() }
     self.clockView.onModeChanged = { [weak self] mode in self?.handleModeChange(mode) }
+    self.clockView.onToggleStaysOnTop = {
+      (NSApplication.shared.delegate as? AppDelegate)?.toggleStaysOnTop()
+    }
     mainView.addSubview(self.clockView)
     self.dockMenuItem = mainView.menuItem
 

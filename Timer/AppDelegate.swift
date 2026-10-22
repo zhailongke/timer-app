@@ -8,9 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   private var currentlyInDock: MVTimerController?
   private var notificationTasks: [Task<Void, Never>] = []
 
+  /// 窗口是否浮在其他窗口之上；默认开，打开就看得见
   private var staysOnTop = false {
     didSet {
       self.applyWindowPresentation()
+      self.syncStaysOnTopControls()
     }
   }
 
@@ -106,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   /// 登记新窗口（主窗口、CMD+N 新窗口、子时钟都走这里）
   func registerController(_ controller: MVTimerController) {
     self.controllers.append(controller)
+    controller.clockView.pinButton.isPinned = self.staysOnTop
     controller.setMode(self.lastUsedMode)
     self.applyWindowPresentation()
   }
@@ -113,15 +116,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   // MARK: - 计时模式
 
   /// 某个时钟切了模式：只有它自己跟着变，顺手把它记成新窗口的默认模式
-  func modeDidChange(to mode: TimerMode, in controller: MVTimerController) {
+  func modeDidChange(to mode: TimerMode, in _: MVTimerController) {
     self.lastUsedMode = mode
-    self.applyWindowPresentation(for: controller)
   }
 
   @objc func toggleStaysOnTop(_ sender: NSMenuItem) {
-    let value = !UserDefaults.standard.bool(forKey: MVUserDefaultsKeys.staysOnTop)
+    self.toggleStaysOnTop()
+    sender.state = self.staysOnTop ? .on : .off
+  }
+
+  /// 图钉按钮走这里（没有菜单项，改完要把菜单里的勾选也刷新一遍）
+  func toggleStaysOnTop() {
+    let value = !self.staysOnTop
     UserDefaults.standard.set(value, forKey: MVUserDefaultsKeys.staysOnTop)
-    sender.state = value ? .on : .off
+    self.staysOnTop = value
+  }
+
+  /// 图钉按钮和菜单栏里的「窗口置顶」都跟着当前状态走
+  private func syncStaysOnTopControls() {
+    for controller in self.controllers {
+      controller.clockView.pinButton.isPinned = self.staysOnTop
+    }
+    let item = NSApplication.shared.mainMenu?.item(withTitle: "窗口")?.submenu?.item(withTitle: "窗口置顶")
+    item?.state = self.staysOnTop ? .on : .off
   }
 
   private func handleClose(_ notification: MVNotification) {
@@ -199,35 +216,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
   }
 
-  /// 秒表要求"悬停在任何窗口之上"：浮窗级别 + 可加入所有 Space（含全屏 App 所在 Space）
-  /// 各时钟各算各的：秒表浮起来，倒计时按普通窗口走（除非开了窗口置顶）
+  /// 置顶开着：浮在所有窗口之上，且能跟着去到每个 Space（含全屏 App 所在的那个）
   private func applyWindowPresentation() {
-    for controller in self.controllers {
-      self.applyWindowPresentation(for: controller)
-    }
-    // 历史记录 / 模板管理等非时钟窗口：只跟「窗口置顶」走
-    for window in NSApplication.shared.windows where !(window.windowController is MVTimerController) {
-      self.applyPresentation(to: window, floats: self.staysOnTop)
-    }
-  }
-
-  func applyWindowPresentation(for controller: MVTimerController) {
-    guard let window = controller.window else { return }
-    self.applyPresentation(to: window, floats: self.staysOnTop || controller.clockView.mode == .stopwatch)
-  }
-
-  private func applyPresentation(to window: NSWindow, floats: Bool) {
-    window.level = floats ? .floating : .normal
-    if floats {
-      window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
-    } else {
-      window.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
+    for window in NSApplication.shared.windows {
+      window.level = self.staysOnTop ? .floating : .normal
+      if self.staysOnTop {
+        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+      } else {
+        window.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
+      }
     }
   }
 
   private func registerDefaults() {
     UserDefaults.standard.register(defaults: [
-      MVUserDefaultsKeys.staysOnTop: false,
+      MVUserDefaultsKeys.staysOnTop: true,
       MVUserDefaultsKeys.soundIndex: 0
     ])
   }
