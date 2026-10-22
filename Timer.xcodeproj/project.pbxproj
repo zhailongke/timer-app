@@ -41,6 +41,11 @@
 		CC000001CCCC001700000001 /* MVTemplateEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000001 /* MVTemplateEditor.swift */; };
 		CC000001CCCC001700000002 /* MVTemplateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000002 /* MVTemplateManager.swift */; };
 		CC000001CCCC001700000003 /* AppDelegate+Templates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001600000003 /* AppDelegate+Templates.swift */; };
+		CC000001CCCC002100000001 /* ClockRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC002000000001 /* ClockRecord.swift */; };
+		CC000001CCCC002100000002 /* MVClockView+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC002000000002 /* MVClockView+History.swift */; };
+		CC000001CCCC002100000003 /* MVTimerController+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC002000000003 /* MVTimerController+History.swift */; };
+		CC000001CCCC002100000004 /* MVHistoryWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC002000000004 /* MVHistoryWindowController.swift */; };
+		CC000001CCCC002100000005 /* AppDelegate+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC002000000005 /* AppDelegate+History.swift */; };
 		CC000001CCCC001000000001 /* MVClockView+Title.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC001000000000 /* MVClockView+Title.swift */; };
 		CC000001CCCC000900000001 /* ChildClockTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000001CCCC000900000000 /* ChildClockTemplate.swift */; };
 		DD000001DDDD000100000001 /* TimerScriptCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD000001DDDD000100000000 /* TimerScriptCommand.swift */; };
@@ -53,6 +58,7 @@
 		CC000015CCCC001500000001 /* TimerInputEdgeCaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000015CCCC001500000000 /* TimerInputEdgeCaseTests.swift */; };
 		CC000016CCCC001600000001 /* TimerStopwatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001600000000 /* TimerStopwatchTests.swift */; };
 		CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001700000000 /* TimerTemplateTests.swift */; };
+		CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001800000000 /* TimerHistoryTests.swift */; };
 		CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000017CCCC001700000000 /* TimerChildClockTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -112,6 +118,11 @@
 		CC000001CCCC001600000001 /* MVTemplateEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTemplateEditor.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001600000002 /* MVTemplateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTemplateManager.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001600000003 /* AppDelegate+Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+Templates.swift"; sourceTree = "<group>"; };
+		CC000001CCCC002000000001 /* ClockRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ClockRecord.swift"; sourceTree = "<group>"; };
+		CC000001CCCC002000000002 /* MVClockView+History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+History.swift"; sourceTree = "<group>"; };
+		CC000001CCCC002000000003 /* MVTimerController+History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVTimerController+History.swift"; sourceTree = "<group>"; };
+		CC000001CCCC002000000004 /* MVHistoryWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVHistoryWindowController.swift"; sourceTree = "<group>"; };
+		CC000001CCCC002000000005 /* AppDelegate+History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+History.swift"; sourceTree = "<group>"; };
 		CC000001CCCC001000000000 /* MVClockView+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Title.swift"; sourceTree = "<group>"; };
 		CC000001CCCC000900000000 /* ChildClockTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ChildClockTemplate.swift"; sourceTree = "<group>"; };
 		CC000010CCCC001000000000 /* TimerUITestCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerUITestCase.swift; sourceTree = "<group>"; };
@@ -122,6 +133,7 @@
 		CC000015CCCC001500000000 /* TimerInputEdgeCaseTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerInputEdgeCaseTests.swift; sourceTree = "<group>"; };
 		CC000016CCCC001600000000 /* TimerStopwatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerStopwatchTests.swift; sourceTree = "<group>"; };
 		CC000016CCCC001700000000 /* TimerTemplateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerTemplateTests.swift; sourceTree = "<group>"; };
+		CC000016CCCC001800000000 /* TimerHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerHistoryTests.swift; sourceTree = "<group>"; };
 		CC000017CCCC001700000000 /* TimerChildClockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChildClockTests.swift; sourceTree = "<group>"; };
 		DD000001DDDD000100000000 /* TimerScriptCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerScriptCommand.swift; sourceTree = "<group>"; };
 		DD000002DDDD000200000000 /* Timer.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Timer.sdef; sourceTree = "<group>"; };
@@ -191,6 +203,11 @@
 				CC000001CCCC001600000001 /* MVTemplateEditor.swift */,
 				CC000001CCCC001600000002 /* MVTemplateManager.swift */,
 				CC000001CCCC001600000003 /* AppDelegate+Templates.swift */,
+				CC000001CCCC002000000001 /* ClockRecord.swift */,
+				CC000001CCCC002000000002 /* MVClockView+History.swift */,
+				CC000001CCCC002000000003 /* MVTimerController+History.swift */,
+				CC000001CCCC002000000004 /* MVHistoryWindowController.swift */,
+				CC000001CCCC002000000005 /* AppDelegate+History.swift */,
 				CC000001CCCC001000000000 /* MVClockView+Title.swift */,
 				CC000001CCCC000900000000 /* ChildClockTemplate.swift */,
 				AA000010AAAA001000000000 /* MVClockProgressView.swift */,
@@ -222,6 +239,7 @@
 				AA000002AAAA000000000002 /* TimerTests.swift */,
 				CC000016CCCC001600000000 /* TimerStopwatchTests.swift */,
 				CC000016CCCC001700000000 /* TimerTemplateTests.swift */,
+				CC000016CCCC001800000000 /* TimerHistoryTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 			);
 			path = TimerTests;
@@ -399,6 +417,11 @@
 				CC000001CCCC001700000001 /* MVTemplateEditor.swift in Sources */,
 				CC000001CCCC001700000002 /* MVTemplateManager.swift in Sources */,
 				CC000001CCCC001700000003 /* AppDelegate+Templates.swift in Sources */,
+				CC000001CCCC002100000001 /* ClockRecord.swift in Sources */,
+				CC000001CCCC002100000002 /* MVClockView+History.swift in Sources */,
+				CC000001CCCC002100000003 /* MVTimerController+History.swift in Sources */,
+				CC000001CCCC002100000004 /* MVHistoryWindowController.swift in Sources */,
+				CC000001CCCC002100000005 /* AppDelegate+History.swift in Sources */,
 				CC000001CCCC001000000001 /* MVClockView+Title.swift in Sources */,
 				CC000001CCCC000900000001 /* ChildClockTemplate.swift in Sources */,
 				DD000001DDDD000100000001 /* TimerScriptCommand.swift in Sources */,
@@ -416,6 +439,7 @@
 				AA000002AAAA000100000002 /* TimerTests.swift in Sources */,
 				CC000016CCCC001600000001 /* TimerStopwatchTests.swift in Sources */,
 				CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */,
+				CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -5,6 +5,8 @@ import UserNotifications
 final class MVTimerController: NSWindowController {
   private weak var dockMenuItem: NSMenuItem?
   let clockView = MVClockView()
+  /// 当前这一段历史记录：起始时间已定，结束时间与时长在收尾时才填
+  var historySegment = ClockRecord.starting(mode: .stopwatch)
 
   /// 上级时钟；主时钟为 nil。关闭下级不影响上级，关闭上级会带走整棵子树
   private(set) weak var parentController: MVTimerController?
@@ -69,6 +71,7 @@ final class MVTimerController: NSWindowController {
       window.setFrameOrigin(Self.originForChild(of: parent))
     }
 
+    self.startHistorySegment()
     window.makeKeyAndOrderFront(self)
   }
 

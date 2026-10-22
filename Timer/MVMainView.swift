@@ -10,6 +10,7 @@ final class MVMainView: NSView {
     didSet {
       self.addChildMenuItem.target = self.controller
       self.saveTemplateMenuItem.target = self.controller
+      self.recordHistoryMenuItem.target = self.controller
     }
   }
 
@@ -32,6 +33,20 @@ final class MVMainView: NSView {
   private let stopwatchMenuItem = NSMenuItem(
     title: "秒表模式",
     action: #selector(AppDelegate.switchToStopwatch(_:)),
+    keyEquivalent: ""
+  )
+
+  /// 不关闭也能先存一笔历史（结束时间记为「至今」）
+  private let recordHistoryMenuItem = NSMenuItem(
+    title: "记入历史",
+    action: #selector(MVTimerController.addHistoryRecord(_:)),
+    keyEquivalent: ""
+  )
+
+  /// 打开历史记录窗口（不是菜单列表）
+  private let historyMenuItem = NSMenuItem(
+    title: "历史记录…",
+    action: #selector(AppDelegate.showHistory(_:)),
     keyEquivalent: ""
   )
 
@@ -103,9 +118,13 @@ final class MVMainView: NSView {
     childMenu.setSubmenu(self.templateMenu, for: self.templateMenuItem)
 
     self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
+    self.historyMenuItem.target = NSApplication.shared.delegate
+    self.recordHistoryMenuItem.toolTip = "把这次计时存进历史，结束时间记为现在（显示「至今」）"
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)
+    self.contextMenu.addItem(self.recordHistoryMenuItem)
+    self.contextMenu.addItem(self.historyMenuItem)
     if let menuItem = self.menuItem {
       self.contextMenu.addItem(menuItem)
     }

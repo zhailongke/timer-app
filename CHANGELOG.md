@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Renaming swaps in a real `NSTextField` over the same spot instead of making the label editable in place: clicking the pencil now always gives a working input field with a visible box, select-all, enter to confirm, esc to cancel
 - The click that ends a rename no longer also starts/stops the clock
 - The rename affordance is now a blue round button (pencil symbol) aligned with the name text, matching the top-right pause button
-- Templates can now be managed: 子时钟 ▸ 管理模板… opens a window listing every template with 修改… (name / mode / duration / auto-start, plus child names) and 删除 (with confirmation)
+- Templates can now be managed
+- New history feature: every clock session is recorded (start time, duration, end time), named after its start time. Closing a clock ends one record; 记入历史 saves a record with the end time set to now (shown as 至今) so still-running child clocks are kept too
+- 历史记录… opens a window instead of a menu list: root level is one row per main clock session, click into a row to drill down through its child clock records, with rename and delete: 子时钟 ▸ 管理模板… opens a window listing every template with 修改… (name / mode / duration / auto-start, plus child names) and 删除 (with confirmation)
 - The rename input field starts short and grows with the typed name instead of always spanning the full width
 - Pressing enter to confirm a rename no longer leaks its key-up to the clock and toggles start/stop: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)
 - The pencil click ends an in-progress rename instead of doing nothing, and a rename that fails to focus the field rolls back instead of leaving a stuck edit state

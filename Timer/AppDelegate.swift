@@ -146,6 +146,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
       let controller = window.windowController as? MVTimerController
     else { return }
 
+    // 关掉 = 这一段记录到此结束；要在摘掉上下级关系之前记，子时钟才知道挂到谁下面
+    controller.recordHistoryOnClose()
+
     // 关掉一个时钟，它的所有下级跟着关（主时钟关闭 → 整棵树关闭）
     for child in controller.childControllers where child.window != nil {
       child.closeHierarchy()
