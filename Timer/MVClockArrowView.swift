@@ -1,8 +1,8 @@
 import AppKit
 
 final class MVClockArrowView: NSView {
-  private static let focusedColor = NSColor(resource: .arrowFocused)
-  private static let unfocusedColor = NSColor(resource: .arrowUnfocused)
+  private static let focusedColor = MVResource.color("arrowFocused")
+  private static let unfocusedColor = MVResource.color("arrowUnfocused")
 
   var progress: CGFloat = 0.0 {
     didSet {

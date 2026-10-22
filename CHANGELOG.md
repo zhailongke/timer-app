@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Stopwatch mode: press `S` or right-click the window and choose 秒表模式 to count up instead of down (#stopwatch)
+- Stopwatch shows elapsed time as 时:分:秒 (`1:05:30`), with the font auto-shrinking to fit; dock badge and VoiceOver include hours past 1h
+- Chinese UI: main menu, context menu and VoiceOver descriptions are now in Chinese
+- Switching between countdown and stopwatch resets the clock
+- Stopwatch windows float above every other window, including full screen apps
+- Duration-setting input (digits, backspace, scroll wheel, ±minutes) is disabled in stopwatch mode
+
 ## [2.1.0] - 2026-02-07
 
 ### Added

@@ -1,9 +1,9 @@
 import AppKit
 
 final class MVClockFaceView: NSView {
-  private static let clockImage = NSImage(resource: .clock)
-  private static let clockUnfocusImage = NSImage(resource: .clockUnfocus)
-  private static let clockHighlightedImage = NSImage(resource: .clockHighlighted)
+  private static let clockImage = MVResource.image("clock")
+  private static let clockUnfocusImage = MVResource.image("clock-unfocus")
+  private static let clockHighlightedImage = MVResource.image("clock-highlighted")
 
   private enum State {
     case normal, focused, highlighted
