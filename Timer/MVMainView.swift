@@ -54,6 +54,13 @@ final class MVMainView: NSView {
     keyEquivalent: ""
   )
 
+  /// 模板管理窗口：改名 / 改模式时长 / 删除
+  private let manageTemplatesMenuItem = NSMenuItem(
+    title: "管理模板…",
+    action: #selector(AppDelegate.manageTemplates(_:)),
+    keyEquivalent: ""
+  )
+
   override var menu: NSMenu? {
     get { self.contextMenu }
     set { /* ignored */ }
@@ -92,7 +99,10 @@ final class MVMainView: NSView {
     childMenu.addItem(self.templateMenuItem)
     childMenu.addItem(self.childMenuSeparator)
     childMenu.addItem(self.saveTemplateMenuItem)
+    childMenu.addItem(self.manageTemplatesMenuItem)
     childMenu.setSubmenu(self.templateMenu, for: self.templateMenuItem)
+
+    self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)

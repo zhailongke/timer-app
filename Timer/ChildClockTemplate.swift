@@ -114,6 +114,17 @@ enum MVTemplateStore {
     Self.save(templates, to: defaults)
   }
 
+  /// 按 id 覆盖（管理窗口里改名、改内容都用它，改名也只留一份）
+  static func update(_ template: ChildClockTemplate, to defaults: UserDefaults = .standard) {
+    var templates = Self.load(from: defaults)
+    if let index = templates.firstIndex(where: { $0.id == template.id }) {
+      templates[index] = template
+    } else {
+      templates.append(template)
+    }
+    Self.save(templates, to: defaults)
+  }
+
   /// 删掉一个模板（名字写错了时用）
   static func remove(id: UUID, from defaults: UserDefaults = .standard) {
     Self.save(Self.load(from: defaults).filter { $0.id != id }, to: defaults)

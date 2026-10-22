@@ -270,4 +270,21 @@ final class TimerLogicTests: XCTestCase {
   func testStopwatchDisplayStringHoursMinutesAndSeconds() {
     XCTAssertEqual(TimerLogic.stopwatchDisplayString(seconds: 3_930), "1:05:30")
   }
+  func testParseDurationMinutesOnly() {
+    XCTAssertEqual(TimerLogic.parseDuration("25"), 1_500)
+  }
+
+  func testParseDurationMinutesAndSeconds() {
+    XCTAssertEqual(TimerLogic.parseDuration("25:30"), 1_530)
+  }
+
+  func testParseDurationWithHours() {
+    XCTAssertEqual(TimerLogic.parseDuration("1:05:00"), 3_900)
+  }
+
+  func testParseDurationRejectsGarbage() {
+    XCTAssertNil(TimerLogic.parseDuration(""))
+    XCTAssertNil(TimerLogic.parseDuration("abc"))
+    XCTAssertNil(TimerLogic.parseDuration("25:xx"))
+  }
 }

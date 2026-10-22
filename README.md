@@ -83,4 +83,5 @@ Right-click a **child** clock and pick **子时钟 ▸ 保存为模板…**. A p
 - Tick **记录下级子时钟** (record child clocks) to also capture this clock's descendants; a second panel then lists every descendant so you can rename them and set whether each starts immediately. Clocks created from such a template come back with the whole chain attached.
 - That option is greyed out when the clock has no descendants.
 - **子时钟 ▸ 从模板选择** lists every saved template; picking one creates a child clock with that name, mode and duration in one go.
+- **子时钟 ▸ 管理模板…** opens a management window listing every template: select one and press 修改… (or double-click) to change its name, mode (countdown / stopwatch), duration and "start immediately"; press 删除 to remove it. Edits are stored by id, so renaming never leaves a stale copy behind.
 - Templates are stored in `UserDefaults`, so they survive a restart. Saving under an existing name replaces that template.

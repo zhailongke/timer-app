@@ -192,4 +192,31 @@ final class TimerTemplateTests: XCTestCase {
 
     XCTAssertFalse(view.isEditingTitle)
   }
+  /// 管理窗口里改名 / 改内容：按 id 覆盖，不会留下旧名字那一份
+  func testUpdateKeepsOneEntryWhenRenamed() {
+    let defaults = self.makeDefaults()
+    let template = ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, duration: 1_500)
+    MVTemplateStore.save([template], to: defaults)
+
+    var renamed = template
+    renamed.name = "数学（新版）"
+    renamed.duration = 3_000
+    MVTemplateStore.update(renamed, to: defaults)
+
+    let loaded = MVTemplateStore.load(from: defaults)
+    XCTAssertEqual(loaded.count, 1)
+    XCTAssertEqual(loaded.first?.name, "数学（新版）")
+    XCTAssertEqual(loaded.first?.duration, 3_000)
+  }
+
+  func testUpdateAppendsWhenIdIsUnknown() {
+    let defaults = self.makeDefaults()
+    let existing = ChildClockTemplate(id: UUID(), name: "数学", mode: .countdown, duration: 1_500)
+    MVTemplateStore.save([existing], to: defaults)
+
+    let other = ChildClockTemplate(id: UUID(), name: "英语", mode: .stopwatch)
+    MVTemplateStore.update(other, to: defaults)
+
+    XCTAssertEqual(MVTemplateStore.load(from: defaults).count, 2)
+  }
 }

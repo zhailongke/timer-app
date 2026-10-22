@@ -58,6 +58,27 @@ enum TimerLogic {
     return String(format: "%d:%02d", total / 60, total % 60)
   }
 
+  /// 解析「25」「25:30」「1:05:00」这类输入，返回秒；认不出来返回 nil。
+  /// 只写一个数字按分钟算（"25" = 25 分钟），写分:秒才精确到秒
+  static func parseDuration(_ text: String) -> CGFloat? {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+
+    let parts = trimmed.split(separator: ":").compactMap { Double($0) }
+    guard !parts.isEmpty, parts.count == trimmed.split(separator: ":").count,
+      parts.allSatisfy({ $0 >= 0 })
+    else { return nil }
+
+    var seconds = 0.0
+    for part in parts {
+      seconds = seconds * 60 + part
+    }
+    if parts.count == 1 {
+      seconds *= 60
+    }
+    return CGFloat(seconds)
+  }
+
   static func badgeString(minutes: Int, seconds: Int) -> String {
     String(format: "%02d:%02d", minutes, seconds)
   }
