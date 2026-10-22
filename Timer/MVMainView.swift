@@ -17,9 +17,15 @@ final class MVMainView: NSView {
   private let contextMenu = NSMenu(title: "菜单")
   private(set) var menuItem: NSMenuItem?
 
+  private let countdownMenuItem = NSMenuItem(
+    title: "倒计时模式",
+    action: #selector(AppDelegate.switchToCountdown(_:)),
+    keyEquivalent: ""
+  )
+
   private let stopwatchMenuItem = NSMenuItem(
     title: "秒表模式",
-    action: #selector(AppDelegate.toggleStopwatchMode(_:)),
+    action: #selector(AppDelegate.switchToStopwatch(_:)),
     keyEquivalent: ""
   )
 
@@ -37,6 +43,7 @@ final class MVMainView: NSView {
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
 
+    self.countdownMenuItem.target = NSApplication.shared.delegate
     self.stopwatchMenuItem.target = NSApplication.shared.delegate
 
     NotificationCenter.default.addObserver(
@@ -71,6 +78,7 @@ final class MVMainView: NSView {
       submenu.addItem(soundItem)
     }
 
+    self.contextMenu.addItem(self.countdownMenuItem)
     self.contextMenu.addItem(self.stopwatchMenuItem)
     self.contextMenu.addItem(self.addChildMenuItem)
     if let menuItem = self.menuItem {
@@ -145,6 +153,7 @@ final class MVMainView: NSView {
 extension MVMainView: NSMenuDelegate {
   func menuWillOpen(_: NSMenu) {
     guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
+    self.countdownMenuItem.state = appDelegate.currentMode == .countdown ? .on : .off
     self.stopwatchMenuItem.state = appDelegate.currentMode == .stopwatch ? .on : .off
   }
 }

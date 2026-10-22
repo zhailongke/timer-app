@@ -14,7 +14,7 @@ When the time is up, a notification will show up with a nice sound.
 
 Create new timers with `CMD+N`.
 
-Press `Tab` (or `S`), or right-click the window and pick **秒表模式** (Stopwatch Mode), to switch a window between countdown and stopwatch (count up). Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. While in stopwatch mode the window floats above all other windows — including full screen apps — so you can keep an eye on elapsed time.
+Press `Tab` (or `S`), or right-click the window and pick **倒计时模式** (Countdown Mode) / **秒表模式** (Stopwatch Mode), to switch every window between countdown and stopwatch (count up). Switching mode resets the clock. In stopwatch mode the clock shows elapsed time as `H:MM:SS` (e.g. `1:05:30`) instead of the countdown's `5' / 30"` style. While in stopwatch mode the window floats above all other windows — including full screen apps — so you can keep an eye on elapsed time.
 
 Install as a [brew cask](https://caskroom.github.io) via 
 
@@ -66,7 +66,7 @@ Once the stopwatch is running, the start time (e.g. `起始 21:30:45`) is shown 
 
 Right-click a window and pick **添加子时钟** (Add child clock) to open a nested window. It looks and works exactly like the main window, keeps its own independent clock, and is labelled `子时钟1`, `子时钟2`, … by depth.
 
-- Each clock starts and pauses on its own, so every clock has its own start time.
+- Each clock starts and pauses on its own, so every clock has its own start time. A new child clock in stopwatch mode starts running immediately.
 - Closing a child clock leaves its parent running; closing the main clock closes the whole chain.
 - A child clock's countdown can never be longer than its parent's — drag or type a longer duration and it is capped at the parent's duration.
 - When a child clock's countdown finishes, it closes itself together with its own children (the main clock just notifies you and stays open).

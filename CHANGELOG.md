@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Stopwatch shows the start time (`起始 21:30:45`) under the elapsed time once running
 - Child clocks: right-click ▸ 添加子时钟 opens a nested window with the same look and behaviour, labelled 子时钟1/2/… by depth (#child-clock)
 - Child clock rules: independent timing, closing a child spares its parent while closing the main clock closes the whole chain, countdown duration capped by the parent, and a finished child countdown closes itself
+- A new child clock starts running right away in stopwatch mode
+- Context menu now has separate 倒计时模式 / 秒表模式 entries instead of one toggle
+- Closing the last window quits the app, so reopening starts from a single clean clock
 - Stopwatch shows elapsed time as 时:分:秒 (`1:05:30`), with the font auto-shrinking to fit; dock badge and VoiceOver include hours past 1h
 - Chinese UI: main menu, context menu and VoiceOver descriptions are now in Chinese
 - Switching between countdown and stopwatch resets the clock

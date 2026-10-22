@@ -4,7 +4,7 @@ import UserNotifications
 @main
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
-  private var controllers: [MVTimerController] = []
+  private(set) var controllers: [MVTimerController] = []
   private var currentlyInDock: MVTimerController?
   private var notificationTasks: [Task<Void, Never>] = []
 
@@ -70,91 +70,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     self.handleTimerCommand(raw, window: window)
   }
 
-  func handleTimerCommand(_ input: String, window: Int? = nil) {
-    if input.lowercased() == "new" {
-      self.newDocument(nil)
-      return
-    }
-
-    let index = (window ?? 1) - 1
-    guard self.controllers.indices.contains(index) else { return }
-    let controller = self.controllers[index]
-    let clockView = controller.clockView
-
-    switch input.lowercased() {
-    case "stop":
-      clockView.paused = false
-      clockView.stop()
-
-    case "reset":
-      clockView.paused = false
-      clockView.stop()
-      clockView.seconds = 0
-      clockView.updateTimerTime()
-      clockView.inputSeconds = false
-
-    case "pause":
-      if clockView.timerTask != nil {
-        clockView.paused = true
-        clockView.stop()
-      } else if clockView.paused, clockView.seconds > 0 {
-        clockView.updateTimerTime()
-        clockView.start()
-      }
-
-    default:
-      guard let seconds = self.parseTimeInput(input), seconds > 0 else { return }
-      // 显式时长就是倒计时，先把全局模式对齐，再启动（默认秒表下也要能这样用）
-      if self.currentMode != .countdown {
-        self.toggleStopwatchMode()
-      }
-      clockView.startTimer(seconds: seconds)
-    }
-
-    controller.window?.makeKeyAndOrderFront(nil)
-    NSApplication.shared.activate(ignoringOtherApps: true)
-  }
-
-  static func parseLaunchArguments(_ args: [String]) -> (command: String?, window: Int?) {
-    // args[0] is the executable path; skip it
-    var command: String?
-    var window: Int?
-    var skip = false
-    for idx in 1..<args.count {
-      if skip { skip = false; continue }
-      if args[idx] == "--window" {
-        if idx + 1 < args.count, let value = Int(args[idx + 1]) {
-          window = value
-          skip = true
-        }
-      } else {
-        command = args[idx]
-      }
-    }
-    return (command, window)
-  }
-
-  private static let maxTimerSeconds: CGFloat = 24 * 60 * 60 // 24 hours
-
-  private func parseTimeInput(_ input: String) -> CGFloat? {
-    let seconds: CGFloat
-
-    // "2:50" → 2 minutes 50 seconds (colon = literal minutes:seconds)
-    if input.contains(":") {
-      let parts = input.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
-      guard parts.count == 2, let minutes = Double(parts[0]), let secs = Double(parts[1]) else { return nil }
-      seconds = CGFloat(minutes * 60 + secs)
-    } else if let value = Double(input) {
-      // "2.5" → 2.5 minutes = 2m30s (dot = fractional minutes)
-      seconds = CGFloat(value * 60)
-    } else {
-      return nil
-    }
-
-    guard seconds.isFinite, seconds <= Self.maxTimerSeconds else { return nil }
-    return seconds
-  }
-
   func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
     for window in NSApplication.shared.windows {
       window.makeKeyAndOrderFront(self)
@@ -205,9 +120,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     self.applyWindowPresentation()
   }
 
-  @objc func toggleStopwatchMode(_ sender: NSMenuItem) {
-    self.toggleStopwatchMode()
-    sender.state = self.currentMode == .stopwatch ? .on : .off
+  /// 右键菜单直接指定模式（不是来回切），两个入口分别对应倒计时 / 秒表
+  @objc func switchToCountdown(_: NSMenuItem) {
+    self.applyMode(.countdown)
+  }
+
+  @objc func switchToStopwatch(_: NSMenuItem) {
+    self.applyMode(.stopwatch)
+  }
+
+  private func applyMode(_ mode: TimerMode) {
+    if self.currentMode != mode {
+      self.toggleStopwatchMode()
+    }
   }
 
   @objc func toggleStaysOnTop(_ sender: NSMenuItem) {
@@ -228,9 +153,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     controller.childControllers.removeAll()
     controller.parentController?.childControllers.removeAll { $0 === controller }
 
-    if controller != self.currentlyInDock,
-      let index = self.controllers.firstIndex(of: controller) {
+    // 关掉就真的放掉：否则控制器会留在列表里，下次打开又冒出来
+    if self.currentlyInDock === controller {
+      self.removeBadgeFromDock()
+      self.currentlyInDock = nil
+    }
+    if let index = self.controllers.firstIndex(of: controller) {
       self.controllers.remove(at: index)
+    }
+
+    // 没有窗口了就退出，下次打开是一个干净的主时钟
+    if self.controllers.isEmpty {
+      Task { NSApplication.shared.terminate(nil) }
     }
   }
 

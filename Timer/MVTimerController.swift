@@ -139,6 +139,11 @@ final class MVTimerController: NSWindowController {
 
     let child = MVTimerController(parent: self)
     appDelegate.registerController(child)
+
+    // 秒表模式的子时钟直接起跑，省掉新建后还要点一下
+    if child.clockView.mode == .stopwatch {
+      child.clockView.start()
+    }
   }
 
   /// 关闭自己及所有下级；上级不受影响
