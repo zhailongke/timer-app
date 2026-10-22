@@ -14,7 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
   }
 
-  private(set) var currentMode: TimerMode = .countdown
+  /// 启动即为秒表模式；按 Tab（或 s）切回倒计时
+  private(set) var currentMode: TimerMode = .stopwatch
 
   override init() {
     super.init()
@@ -40,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     self.observeNotifications()
     self.staysOnTop = UserDefaults.standard.bool(forKey: MVUserDefaultsKeys.staysOnTop)
+    self.applyWindowPresentation()
 
     let parsed = Self.parseLaunchArguments(CommandLine.arguments)
     if let command = parsed.command {
@@ -103,6 +105,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     default:
       guard let seconds = self.parseTimeInput(input), seconds > 0 else { return }
+      // 显式时长就是倒计时，先把全局模式对齐，再启动（默认秒表下也要能这样用）
+      if self.currentMode != .countdown {
+        self.toggleStopwatchMode()
+      }
       clockView.startTimer(seconds: seconds)
     }
 
@@ -180,9 +186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     let controller = MVTimerController(closeToWindow: NSApplication.shared.keyWindow)
     self.controllers.append(controller)
     controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
-    if self.currentMode == .stopwatch {
-      controller.setMode(.stopwatch)
-    }
+    controller.setMode(self.currentMode)
     self.applyWindowPresentation()
   }
 

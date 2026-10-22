@@ -44,4 +44,14 @@ final class MVWindow: NSWindow {
       closeButton.frame = closeFrame
     }
   }
+
+  /// Tab 默认被窗口拿去做焦点切换，这里提前截获，交给 controller 切换模式；
+  /// 若事件没经过窗口而是直接到达响应链末端，由 MVTimerController.keyDown 兜底
+  override func keyDown(with event: NSEvent) {
+    if event.keyCode == MVTimerController.tabKeyCode {
+      (self.windowController as? MVTimerController)?.toggleMode()
+      return
+    }
+    super.keyDown(with: event)
+  }
 }

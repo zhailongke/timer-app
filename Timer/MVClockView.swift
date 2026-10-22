@@ -53,7 +53,12 @@ final class MVClockView: NSView {
     return formatter
   }()
   var inputSeconds: Bool = false
-  var mode: TimerMode = .countdown
+  /// 默认秒表模式；秒表没有可调箭头，拖拽设定时长只在倒计时下有意义
+  var mode: TimerMode = .stopwatch {
+    didSet {
+      self.arrowView.isHidden = self.mode == .stopwatch
+    }
+  }
   var lastTimerSeconds: CGFloat?
   /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
   var onModeToggleRequest: (() -> Void)?
@@ -136,6 +141,7 @@ final class MVClockView: NSView {
     self.addSubview(self.minutesLabel)
     self.addSubview(self.secondsLabel)
 
+    self.arrowView.isHidden = self.mode == .stopwatch
     self.updateClockFaceView()
     self.updateAllViews()
   }
@@ -255,7 +261,6 @@ extension MVClockView {
     self.stopwatchAccumulated = 0
     self.stopwatchStartDate = nil
     self.inputSeconds = false
-    self.arrowView.isHidden = newMode == .stopwatch
     self.updateTimerTime()
     self.updateAllViews()
     self.postAccessibilityValueChanged()
@@ -314,25 +319,13 @@ extension MVClockView {
   private func updateStopwatchLabel() {
     let text = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
     self.minutesLabel.string = text
-    self.minutesLabel.font = Self.stopwatchFont(fitting: text, maxWidth: 120)
+    self.minutesLabel.font = MVLabel.monospacedDigitFont(fitting: text, maxWidth: 120)
     self.secondsLabel.string = ""
 
     self.minutesLabel.sizeToFit()
     var frame = self.minutesLabel.frame
     frame.origin.x = round((self.bounds.width - frame.size.width) / 2)
     self.minutesLabel.frame = frame
-  }
-
-  private static func stopwatchFont(fitting text: String, maxWidth: CGFloat) -> NSFont {
-    var size: CGFloat = 30
-    while size > 12 {
-      let font = NSFont.monospacedDigitSystemFont(ofSize: size, weight: .medium)
-      if text.size(withAttributes: [.font: font]).width <= maxWidth {
-        return font
-      }
-      size -= 1
-    }
-    return NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
   }
 
   private func updateBadge() {

@@ -4,8 +4,16 @@ import XCTest
 
 @MainActor
 final class TimerStopwatchTests: XCTestCase {
+  func testDefaultModeIsStopwatch() {
+    let view = MVClockView()
+
+    XCTAssertEqual(view.mode, .stopwatch)
+    XCTAssertEqual(view.seconds, 0)
+  }
+
   func testSwitchingModeResets() {
     let view = MVClockView()
+    view.setMode(.countdown)
     view.seconds = 120
 
     view.setMode(.stopwatch)
@@ -54,6 +62,7 @@ final class TimerStopwatchTests: XCTestCase {
 
   func testCountdownStillAcceptsDurationInput() {
     let view = MVClockView()
+    view.setMode(.countdown)
 
     view.keyUp(with: Self.keyEvent(characters: "5"))
 

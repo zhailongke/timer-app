@@ -87,13 +87,25 @@ final class MVTimerController: NSWindowController {
     self.playAlarmSound()
   }
 
+  /// Tab 键码；MVWindow 与这里共用，避免两处各写一份
+  static let tabKeyCode: UInt16 = 48
+
   override func keyUp(with event: NSEvent) {
     self.clockView.keyUp(with: event)
   }
 
   // Override required to suppress system beep on key press
-  override func keyDown(with _: NSEvent) {
+  override func keyDown(with event: NSEvent) {
+    if event.keyCode == Self.tabKeyCode {
+      self.toggleMode()
+      return
+    }
     // Intentionally empty
+  }
+
+  /// Tab / s 键切换倒计时与秒表，实际切换统一交给 AppDelegate（含窗口置顶）
+  func toggleMode() {
+    self.clockView.onModeToggleRequest?()
   }
 
   func pickSound(_ index: Int) {

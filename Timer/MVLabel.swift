@@ -30,4 +30,21 @@ final class MVLabel: NSTextField {
   override func hitTest(_: NSPoint) -> NSView? {
     nil
   }
+
+  /// 文本长度会变时（如秒表的「时:分:秒」）用它挑一个放得下的最大等宽字号
+  static func monospacedDigitFont(
+    fitting text: String,
+    maxWidth: CGFloat,
+    maxSize: CGFloat = 30
+  ) -> NSFont {
+    var size = maxSize
+    while size > 12 {
+      let font = NSFont.monospacedDigitSystemFont(ofSize: size, weight: .medium)
+      if text.size(withAttributes: [.font: font]).width <= maxWidth {
+        return font
+      }
+      size -= 1
+    }
+    return NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+  }
 }
