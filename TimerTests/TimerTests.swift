@@ -242,18 +242,32 @@ final class TimerLogicTests: XCTestCase {
   // MARK: - accessibilityTimeDescription
 
   func testAccessibilityTimeDescriptionMinutesAndSeconds() {
-    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 5, seconds: 30), "5 minutes 30 seconds")
+    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 5, seconds: 30), "5 分 30 秒")
   }
 
   func testAccessibilityTimeDescriptionMinutesOnly() {
-    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 3, seconds: 0), "3 minutes")
+    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 3, seconds: 0), "3 分")
   }
 
   func testAccessibilityTimeDescriptionSecondsOnly() {
-    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 0, seconds: 45), "45 seconds")
+    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 0, seconds: 45), "45 秒")
   }
 
   func testAccessibilityTimeDescriptionZero() {
-    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 0, seconds: 0), "0 seconds")
+    XCTAssertEqual(TimerLogic.accessibilityTimeDescription(minutes: 0, seconds: 0), "0 秒")
+  }
+
+  // MARK: - stopwatchDisplayString
+
+  func testStopwatchDisplayStringSecondsOnly() {
+    XCTAssertEqual(TimerLogic.stopwatchDisplayString(seconds: 45), "0:00:45")
+  }
+
+  func testStopwatchDisplayStringMinutesAndSeconds() {
+    XCTAssertEqual(TimerLogic.stopwatchDisplayString(seconds: 330), "0:05:30")
+  }
+
+  func testStopwatchDisplayStringHoursMinutesAndSeconds() {
+    XCTAssertEqual(TimerLogic.stopwatchDisplayString(seconds: 3_930), "1:05:30")
   }
 }

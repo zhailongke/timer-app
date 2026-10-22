@@ -10,11 +10,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
   private var staysOnTop = false {
     didSet {
-      for window in NSApplication.shared.windows {
-        window.level = self.windowLevel
-      }
+      self.applyWindowPresentation()
     }
   }
+
+  private(set) var currentMode: TimerMode = .countdown
 
   override init() {
     super.init()
@@ -22,8 +22,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   }
 
   func applicationDidFinishLaunching(_: Notification) {
+    MVMenu.installMainMenuIfNeeded()
+
     let controller = MVTimerController()
     self.controllers.append(controller)
+    controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
     self.addBadgeToDock(controller: controller)
 
     UNUserNotificationCenter.current().delegate = self
@@ -175,11 +178,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
   @objc func newDocument(_: AnyObject?) {
     let controller = MVTimerController(closeToWindow: NSApplication.shared.keyWindow)
-    controller.window?.level = self.windowLevel
     self.controllers.append(controller)
+    controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
+    if self.currentMode == .stopwatch {
+      controller.setMode(.stopwatch)
+    }
+    self.applyWindowPresentation()
   }
 
-  private func handleClose(_ notification: Notification) {
+  // MARK: - 秒表模式
+
+  /// 在倒计时 / 秒表之间切换，切换即重置
+  @objc func toggleStopwatchMode() {
+    self.currentMode = self.currentMode == .countdown ? .stopwatch : .countdown
+    for controller in self.controllers {
+      controller.setMode(self.currentMode)
+    }
+    self.applyWindowPresentation()
+  }
+
+  @objc func toggleStopwatchMode(_ sender: NSMenuItem) {
+    self.toggleStopwatchMode()
+    sender.state = self.currentMode == .stopwatch ? .on : .off
+  }
+
+  @objc func toggleStaysOnTop(_ sender: NSMenuItem) {
+    let value = !UserDefaults.standard.bool(forKey: MVUserDefaultsKeys.staysOnTop)
+    UserDefaults.standard.set(value, forKey: MVUserDefaultsKeys.staysOnTop)
+    sender.state = value ? .on : .off
+  }
+
+  private func handleClose(_ notification: MVNotification) {
     if let window = notification.object as? NSWindow,
       let controller = window.windowController as? MVTimerController,
       controller != self.currentlyInDock,
@@ -188,7 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
   }
 
-  private func handleOcclusionChange(_ notification: Notification) {
+  private func handleOcclusionChange(_ notification: MVNotification) {
     if let window = notification.object as? NSWindow,
       let controller = window.windowController as? MVTimerController {
       controller.windowVisibilityChanged(window.occlusionState.contains(.visible))
@@ -202,7 +231,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   private func observeNotifications() {
     self.notificationTasks.append(
       Task { [weak self] in
-        for await notification in NotificationCenter.default.notifications(named: NSWindow.willCloseNotification) {
+        for await notification in NotificationCenter.default.mvNotifications(named: NSWindow.willCloseNotification) {
           self?.handleClose(notification)
         }
       }
@@ -210,7 +239,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     self.notificationTasks.append(
       Task { [weak self] in
-        for await _ in NotificationCenter.default.notifications(named: UserDefaults.didChangeNotification) {
+        for await _ in NotificationCenter.default.mvNotifications(named: UserDefaults.didChangeNotification) {
           self?.handleUserDefaultsChange()
         }
       }
@@ -218,7 +247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     self.notificationTasks.append(
       Task { [weak self] in
-        for await notification in NotificationCenter.default.notifications(
+        for await notification in NotificationCenter.default.mvNotifications(
           named: NSWindow.didChangeOcclusionStateNotification
         ) {
           self?.handleOcclusionChange(notification)
@@ -234,7 +263,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   }
 
   private var windowLevel: NSWindow.Level {
-    self.staysOnTop ? .floating : .normal
+    (self.staysOnTop || self.currentMode == .stopwatch) ? .floating : .normal
+  }
+
+  /// 秒表要求"悬停在任何窗口之上"：浮窗级别 + 可加入所有 Space（含全屏 App 所在 Space）
+  private func applyWindowPresentation() {
+    for window in NSApplication.shared.windows {
+      window.level = self.windowLevel
+      if self.currentMode == .stopwatch {
+        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+      } else {
+        window.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
+      }
+    }
   }
 
   private func registerDefaults() {

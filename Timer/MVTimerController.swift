@@ -17,6 +17,7 @@ final class MVTimerController: NSWindowController {
     self.init(window: window)
 
     mainView.controller = self
+    mainView.clockView = self.clockView
     self.clockView.onTimerComplete = { [weak self] in self?.handleClockTimer() }
     mainView.addSubview(self.clockView)
     self.dockMenuItem = mainView.menuItem
@@ -52,6 +53,10 @@ final class MVTimerController: NSWindowController {
     MainActor.assumeIsolated {
       self.clockView.stop()
     }
+  }
+
+  func setMode(_ mode: TimerMode) {
+    self.clockView.setMode(mode)
   }
 
   func showInDock(_ state: Bool) {

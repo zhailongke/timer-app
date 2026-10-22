@@ -43,6 +43,12 @@ enum TimerLogic {
     return "\(Int(seconds.truncatingRemainder(dividingBy: 60)))\""
   }
 
+  /// 秒表用「时:分:秒」显示，例如 0:05:30 / 1:05:30
+  static func stopwatchDisplayString(seconds: CGFloat) -> String {
+    let total = max(0, Int(seconds))
+    return String(format: "%d:%02d:%02d", total / 3_600, (total % 3_600) / 60, total % 60)
+  }
+
   static func badgeString(minutes: Int, seconds: Int) -> String {
     String(format: "%02d:%02d", minutes, seconds)
   }
@@ -94,12 +100,12 @@ enum TimerLogic {
 
   static func accessibilityTimeDescription(minutes: Int, seconds: Int) -> String {
     if minutes > 0, seconds > 0 {
-      return "\(minutes) minutes \(seconds) seconds"
+      return "\(minutes) 分 \(seconds) 秒"
     }
     if minutes > 0 {
-      return "\(minutes) minutes"
+      return "\(minutes) 分"
     }
-    return "\(seconds) seconds"
+    return "\(seconds) 秒"
   }
 
   // MARK: - Sound

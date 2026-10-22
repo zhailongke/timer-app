@@ -3,6 +3,8 @@ import AppKit
 final class MVClockView: NSView {
   override var mouseDownCanMoveWindow: Bool { false }
 
+  /// 内部所有坐标都按这个尺寸设计，缩放窗口时靠 frame / bounds 的比值整体放大缩小
+  static let designSize: CGFloat = 150
   private static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
   private static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
 
@@ -12,7 +14,7 @@ final class MVClockView: NSView {
 
   private let pauseIconImageView: NSImageView = {
     let view = NSImageView(frame: NSRect(x: 70, y: 99, width: 10, height: 12))
-    view.image = NSImage(resource: .iconPause)
+    view.image = MVResource.image("icon-pause")
     view.alphaValue = 0.0
     return view
   }()
@@ -21,7 +23,7 @@ final class MVClockView: NSView {
     let label = MVLabel(frame: NSRect(x: 0, y: 94, width: 150, height: 20))
     label.font = NSFont.systemFont(ofSize: 15, weight: .medium)
     label.alignment = .center
-    label.textColor = NSColor(resource: .timerTime)
+    label.textColor = MVResource.color("timerTime")
     return label
   }()
 
@@ -30,7 +32,7 @@ final class MVClockView: NSView {
     label.string = ""
     label.font = MVClockView.minutesFont
     label.alignment = .center
-    label.textColor = NSColor(resource: .minutes)
+    label.textColor = MVResource.color("minutes")
     return label
   }()
 
@@ -38,7 +40,7 @@ final class MVClockView: NSView {
     let label = MVLabel(frame: NSRect(x: 0, y: 38, width: 150, height: 20))
     label.font = MVClockView.secondsFont
     label.alignment = .center
-    label.textColor = NSColor(resource: .seconds)
+    label.textColor = MVResource.color("seconds")
     return label
   }()
 
@@ -51,7 +53,10 @@ final class MVClockView: NSView {
     return formatter
   }()
   var inputSeconds: Bool = false
+  var mode: TimerMode = .countdown
   var lastTimerSeconds: CGFloat?
+  /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
+  var onModeToggleRequest: (() -> Void)?
   var inDock: Bool = false {
     didSet {
       if !self.inDock {
@@ -102,14 +107,20 @@ final class MVClockView: NSView {
   }
 
   private var progress: CGFloat {
-    self.invertProgressToScale(self.seconds / 60.0 / 60.0)
+    if self.mode == .stopwatch {
+      // 秒表：每小时绕满一圈
+      return self.seconds.truncatingRemainder(dividingBy: 3_600) / 3_600
+    }
+    return self.invertProgressToScale(self.seconds / 60.0 / 60.0)
   }
   var didDrag: Bool = false
+  var stopwatchStartDate: Date?
+  var stopwatchAccumulated: CGFloat = 0
 
   // MARK: -
 
   convenience init() {
-    self.init(frame: NSRect(x: 0, y: 0, width: 150, height: 150))
+    self.init(frame: NSRect(x: 0, y: 0, width: Self.designSize, height: Self.designSize))
 
     self.center(self.progressView)
     self.addSubview(self.progressView)
@@ -140,7 +151,7 @@ final class MVClockView: NSView {
     for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
       self.notificationTasks.append(
         Task { [weak self] in
-          for await _ in NotificationCenter.default.notifications(named: name, object: window) {
+          for await _ in NotificationCenter.default.mvNotifications(named: name, object: window) {
             self?.updateClockFaceView()
             self?.arrowView.needsDisplay = true
             self?.progressView.needsDisplay = true
@@ -191,6 +202,8 @@ extension MVClockView {
   }
 
   private func handleArrowControl(progress rawProgress: CGFloat) {
+    guard self.mode == .countdown else { return }
+
     var progressValue = rawProgress
     progressValue = self.convertProgressToScale(progressValue)
     var seconds: CGFloat = round(progressValue * 60.0 * 60.0)
@@ -208,19 +221,43 @@ extension MVClockView {
   }
 
   private func handleArrowControlMouseUp() {
+    guard self.mode == .countdown else { return }
+
     self.updateTimerTime()
     self.start()
   }
 
   func handleClick() {
-    guard self.seconds > 0 else { return }
     if self.timerTask == nil {
+      // 秒表从 0 也能起跑；倒计时必须有时长才启动
+      guard self.mode == .stopwatch || self.seconds > 0 else { return }
       self.updateTimerTime()
       self.start()
     } else {
+      if self.mode == .stopwatch {
+        self.stopwatchAccumulated = self.seconds
+        self.stopwatchStartDate = nil
+      }
       self.paused = true
       self.stop()
     }
+    self.postAccessibilityValueChanged()
+  }
+
+  /// 切换模式，切换即重置
+  func setMode(_ newMode: TimerMode) {
+    guard newMode != self.mode else { return }
+
+    self.mode = newMode
+    self.paused = false
+    self.stop()
+    self.seconds = 0
+    self.stopwatchAccumulated = 0
+    self.stopwatchStartDate = nil
+    self.inputSeconds = false
+    self.arrowView.isHidden = newMode == .stopwatch
+    self.updateTimerTime()
+    self.updateAllViews()
     self.postAccessibilityValueChanged()
   }
 
@@ -241,10 +278,20 @@ extension MVClockView {
   }
 
   func updateTimerTime() {
+    if self.mode == .stopwatch {
+      self.timerTime = Date()
+      return
+    }
     self.timerTime = Date(timeIntervalSinceNow: Double(self.seconds))
   }
 
   private func updateLabels() {
+    if self.mode == .stopwatch {
+      self.updateStopwatchLabel()
+      return
+    }
+
+    self.minutesLabel.font = Self.minutesFont
     self.minutesLabel.string = TimerLogic.minutesDisplayString(seconds: self.seconds)
     let suffixWidth: CGFloat = self.seconds < 60 ? self.minutesLabelSecondsSuffixWidth : self.minutesLabelSuffixWidth
     self.minutesLabel.sizeToFit()
@@ -263,11 +310,40 @@ extension MVClockView {
     }
   }
 
+  /// 秒表：整块显示「时:分:秒」，字号按宽度自适应，隐藏小号秒标签
+  private func updateStopwatchLabel() {
+    let text = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
+    self.minutesLabel.string = text
+    self.minutesLabel.font = Self.stopwatchFont(fitting: text, maxWidth: 120)
+    self.secondsLabel.string = ""
+
+    self.minutesLabel.sizeToFit()
+    var frame = self.minutesLabel.frame
+    frame.origin.x = round((self.bounds.width - frame.size.width) / 2)
+    self.minutesLabel.frame = frame
+  }
+
+  private static func stopwatchFont(fitting text: String, maxWidth: CGFloat) -> NSFont {
+    var size: CGFloat = 30
+    while size > 12 {
+      let font = NSFont.monospacedDigitSystemFont(ofSize: size, weight: .medium)
+      if text.size(withAttributes: [.font: font]).width <= maxWidth {
+        return font
+      }
+      size -= 1
+    }
+    return NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+  }
+
   private func updateBadge() {
     if self.inDock {
       if self.timerTask != nil || self.paused {
+        if self.mode == .stopwatch, self.seconds >= 3_600 {
+          NSApplication.shared.dockTile.badgeLabel = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
+          return
+        }
         let badgeSeconds = Int(self.seconds.truncatingRemainder(dividingBy: 60))
-        let badgeMinutes = Int(self.minutes)
+        let badgeMinutes = Int(self.minutes) % 60
         NSApplication.shared.dockTile.badgeLabel = TimerLogic.badgeString(minutes: badgeMinutes, seconds: badgeSeconds)
       } else {
         self.removeBadge()
@@ -292,6 +368,12 @@ extension MVClockView {
         range: NSRange(ampmRange, in: timeString)
       )
     }
+  }
+
+  /// 窗口缩放时 frame 会变，bounds 始终保持设计尺寸，内部子视图因此自动等比缩放
+  override func setFrameSize(_ newSize: NSSize) {
+    super.setFrameSize(newSize)
+    self.bounds.size = NSSize(width: Self.designSize, height: Self.designSize)
   }
 
   override func hitTest(_ aPoint: NSPoint) -> NSView? {

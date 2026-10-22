@@ -9,15 +9,16 @@ extension MVClockView {
     self.nextResponder?.mouseDown(with: event)
   }
 
-  override func mouseDragged(with _: NSEvent) {
-    if !self.didDrag {
-      self.didDrag = true
-      self.updateClockFaceView()
-    }
+  override func mouseDragged(with event: NSEvent) {
+    guard !self.didDrag else { return }
+    self.didDrag = true
+    self.updateClockFaceView()
+    // 内容视图铺满整个窗口后没有标题栏可拖，这里自己接管拖动
+    self.window?.performDrag(with: event)
   }
 
   override func scrollWheel(with event: NSEvent) {
-    guard self.timerTask == nil, !self.paused else { return }
+    guard self.timerTask == nil, !self.paused, self.mode == .countdown else { return }
 
     let delta: CGFloat
     if event.hasPreciseScrollingDeltas {
@@ -55,37 +56,58 @@ extension MVClockView {
     let minuteAmount = modifiers.contains(.shift) ? 10 : 1
 
     // Use the physical key ("=" is the +/= key; shift state isn't reliable on keyUp)
-    let isAdd = chars == "\u{F700}" || chars == "=" // up arrow or +/= key
-    let isSubtract = chars == "\u{F701}" || chars == "-" // down arrow or -/_ key
-
-    if isAdd {
-      self.adjustMinutes(by: minuteAmount)
-    } else if isSubtract {
-      self.adjustMinutes(by: -minuteAmount)
-    } else {
-      switch chars {
-      case ".":
-        self.inputSeconds.toggle()
-
-      case "\u{1B}": // escape
-        self.resetTimer()
-
-      case "\u{7F}", "\u{F728}": // delete, forward delete
-        self.handleBackspace()
-
-      case "\r", " ", "\u{03}": // return, space, keypad enter
-        self.handleClick()
-
-      case "r":
-        if self.timerTask == nil, !self.paused, let seconds = self.lastTimerSeconds {
-          self.seconds = seconds
-          self.handleClick()
-        }
-
-      default:
-        self.handleDigitInput(event)
-      }
+    if chars == "\u{F700}" || chars == "=" { // up arrow or +/= key
+      self.adjustMinutesIfCountdown(by: minuteAmount)
+      return
     }
+    if chars == "\u{F701}" || chars == "-" { // down arrow or -/_ key
+      self.adjustMinutesIfCountdown(by: -minuteAmount)
+      return
+    }
+    if chars == "s" { // 切换秒表 / 倒计时
+      self.onModeToggleRequest?()
+      return
+    }
+    self.handleCommand(chars: chars, event: event)
+  }
+
+  /// 秒表只保留起停与归零，一切"设定时长"的输入都禁用
+  private func handleCommand(chars: String?, event: NSEvent) {
+    if self.mode == .stopwatch, chars != "\u{1B}", chars != "\r", chars != " ", chars != "\u{03}" {
+      return
+    }
+
+    switch chars {
+    case ".":
+      self.inputSeconds.toggle()
+
+    case "\u{1B}": // escape
+      self.resetTimer()
+
+    case "\u{7F}", "\u{F728}": // delete, forward delete
+      self.handleBackspace()
+
+    case "\r", " ", "\u{03}": // return, space, keypad enter
+      self.handleClick()
+
+    case "r":
+      self.restartLastTimer()
+
+    default:
+      self.handleDigitInput(event)
+    }
+  }
+
+  private func restartLastTimer() {
+    if self.timerTask == nil, !self.paused, let seconds = self.lastTimerSeconds {
+      self.seconds = seconds
+      self.handleClick()
+    }
+  }
+
+  private func adjustMinutesIfCountdown(by minutes: Int) {
+    guard self.mode == .countdown else { return }
+    self.adjustMinutes(by: minutes)
   }
 
   private func adjustMinutes(by minutes: Int) {
@@ -97,6 +119,8 @@ extension MVClockView {
     self.paused = false
     self.stop()
     self.seconds = 0
+    self.stopwatchAccumulated = 0
+    self.stopwatchStartDate = nil
     self.updateTimerTime()
     self.inputSeconds = false
   }
@@ -139,12 +163,24 @@ extension MVClockView {
 
 extension MVClockView {
   func start() {
+    if self.mode == .stopwatch {
+      self.paused = false
+      self.stop()
+      self.stopwatchStartDate = Date()
+      self.updateTimerTime()
+      self.startTicker()
+      return
+    }
+
     guard self.seconds > 0 else { return }
     self.lastTimerSeconds = self.seconds
 
     self.paused = false
     self.stop()
+    self.startTicker()
+  }
 
+  private func startTicker() {
     self.timerTask = Task { [weak self] in
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(1), tolerance: .milliseconds(30))
@@ -163,6 +199,7 @@ extension MVClockView {
   }
 
   func startTimer(seconds: CGFloat) {
+    self.setMode(.countdown)
     self.paused = false
     self.stop()
     self.seconds = seconds
@@ -171,6 +208,16 @@ extension MVClockView {
   }
 
   private func tick() {
+    guard self.timerTask != nil else { return }
+
+    if self.mode == .stopwatch {
+      guard let startDate = self.stopwatchStartDate else { return }
+      let elapsed = CGFloat(Date().timeIntervalSince(startDate))
+      self.seconds = self.stopwatchAccumulated + floor(elapsed)
+      self.timerTime = Date()
+      return
+    }
+
     guard let timerTime = self.timerTime else { return }
 
     let secondsRemaining = CGFloat(timerTime.timeIntervalSinceNow)
@@ -223,22 +270,24 @@ extension MVClockView {
   override func accessibilityValue() -> Any? { self.accessibilityTimerDescription }
 
   private var accessibilityTimerDescription: String {
-    let mins = Int(self.minutes)
+    let hours = Int(self.seconds) / 3_600
+    let mins = Int(self.minutes) % 60
     let secs = Int(self.seconds.truncatingRemainder(dividingBy: 60))
 
     if self.seconds <= 0, self.timerTask == nil {
-      return "Ready"
+      return "准备就绪"
     }
 
     let timeDescription = TimerLogic.accessibilityTimeDescription(minutes: mins, seconds: secs)
+    let fullDescription = hours > 0 ? "\(hours) 小时 \(timeDescription)" : timeDescription
 
     if self.paused {
-      return "Paused at \(timeDescription)"
+      return "已暂停 \(fullDescription)"
     }
     if self.timerTask != nil {
-      return "\(timeDescription) remaining"
+      return self.mode == .stopwatch ? "已计时 \(fullDescription)" : "剩余 \(fullDescription)"
     }
-    return timeDescription
+    return fullDescription
   }
 
   func postAccessibilityValueChanged() {
