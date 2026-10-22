@@ -67,10 +67,10 @@ final class MVClockView: NSView {
   /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
   let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
 
-  /// 名字右边的小铅笔，提示「这里可以双击改名」；只有能改名的子时钟才显示
+  /// 名字右边的铅笔按钮：点它进入改名；只有能改名的子时钟才显示
   let renameHintImageView: NSImageView = {
-    let view = NSImageView(frame: NSRect(x: 112, y: 2, width: 10, height: 12))
-    if let symbol = NSImage(systemSymbolName: "pencil", accessibilityDescription: "Double click to rename") {
+    let view = NSImageView(frame: NSRect(x: 111, y: 1, width: 12, height: 14))
+    if let symbol = NSImage(systemSymbolName: "pencil", accessibilityDescription: "Rename") {
       symbol.isTemplate = true
       view.image = symbol
     }
@@ -78,6 +78,11 @@ final class MVClockView: NSView {
     view.alphaValue = 0
     return view
   }()
+
+  /// 铅笔图标小，点击区域往外扩一圈，好点
+  var renameHintHitFrame: NSRect {
+    self.renameHintImageView.frame.insetBy(dx: -8, dy: -6)
+  }
   /// 名字区域用来接「鼠标移入 / 移出」，好在悬停时提示可以改名
   var titleTrackingArea: NSTrackingArea?
 
@@ -107,13 +112,16 @@ final class MVClockView: NSView {
   /// 界面上标记的层级名，例如「子时钟1」；主时钟为空
   var clockTitle: String {
     get { self.titleLabel.string }
-    set { self.titleLabel.string = newValue }
+    set {
+      self.titleLabel.string = newValue
+      self.layoutRenameHint()
+    }
   }
-  /// 子时钟可以双击改名；主时钟没有名字，不能改
+  /// 子时钟可以改名（点名字右边的铅笔）；主时钟没有名字，不能改
   var isTitleEditable = false {
     didSet {
       // 铅笔常驻但半透明，鼠标移上去才变亮
-      self.renameHintImageView.alphaValue = self.isTitleEditable ? 0.45 : 0
+      self.renameHintImageView.alphaValue = self.isTitleEditable ? 0.6 : 0
       if !self.isTitleEditable {
         self.titleLabel.isSelectable = false
       }

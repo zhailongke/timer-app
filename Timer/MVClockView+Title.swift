@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - 子时钟改名
 
-/// 名字在圆框外，双击进入编辑；回车或点到别处结束，esc 撤销
+/// 点名字右边的铅笔进入编辑；回车或点到别处结束，esc 撤销
 extension MVClockView: NSTextFieldDelegate {
   func beginTitleEditing() {
     guard self.isTitleEditable, !self.isEditingTitle else { return }
@@ -20,14 +20,18 @@ extension MVClockView: NSTextFieldDelegate {
   func endTitleEditing() {
     guard self.isEditingTitle else { return }
 
-    let edited = self.titleLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-    self.clockTitle = edited.isEmpty ? self.titleBeforeEditing : edited
+    // 先关掉可编辑，controlTextDidEndEditing 回来时不会重复走一遍
     self.titleLabel.isEditable = false
     self.titleLabel.isSelectable = self.isTitleEditable
-    self.setTitleHovered(false)
+    self.window?.endEditing(for: nil)
+
+    let edited = self.titleLabel.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    self.clockTitle = edited.isEmpty ? self.titleBeforeEditing : edited
+
     if self.window?.firstResponder === self.titleLabel {
       self.window?.makeFirstResponder(nil)
     }
+    self.setTitleHovered(false)
     self.postAccessibilityValueChanged()
   }
 
@@ -40,17 +44,17 @@ extension MVClockView: NSTextFieldDelegate {
     guard self.isTitleEditable, !self.isEditingTitle else { return }
 
     self.layoutRenameHint()
-    self.renameHintImageView.alphaValue = hovered ? 1 : 0.45
+    self.renameHintImageView.alphaValue = hovered ? 1 : 0.6
     self.setTitleUnderlined(hovered)
   }
 
   /// 铅笔紧跟在名字后面，名字太长就贴在右边不出界
-  private func layoutRenameHint() {
+  func layoutRenameHint() {
     let font = self.titleLabel.font ?? NSFont.systemFont(ofSize: 10, weight: .medium)
     let textWidth = (self.titleLabel.stringValue as NSString).size(withAttributes: [.font: font]).width
-    let hintX = min(self.titleLabel.frame.midX + textWidth / 2 + 4, self.bounds.width - 14)
+    let hintX = min(self.titleLabel.frame.midX + textWidth / 2 + 4, self.bounds.width - 16)
 
-    self.renameHintImageView.frame = NSRect(x: hintX, y: 2, width: 10, height: 12)
+    self.renameHintImageView.frame = NSRect(x: hintX, y: 1, width: 12, height: 14)
   }
 
   private func setTitleUnderlined(_ underlined: Bool) {

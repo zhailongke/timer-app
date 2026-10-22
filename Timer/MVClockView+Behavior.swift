@@ -5,6 +5,15 @@ import AppKit
 extension MVClockView {
   override func mouseDown(with event: NSEvent) {
     self.didDrag = false
+
+    // 正在改名时点到别处就收工，避免编辑状态卡住（卡住会让快捷键全部失效）
+    if self.isEditingTitle {
+      let point = self.convert(event.locationInWindow, from: nil)
+      if !self.titleLabel.frame.contains(point), !self.renameHintHitFrame.contains(point) {
+        self.endTitleEditing()
+      }
+    }
+
     self.updateClockFaceView(highlighted: true)
     self.nextResponder?.mouseDown(with: event)
   }
@@ -69,11 +78,15 @@ extension MVClockView {
   override func mouseUp(with event: NSEvent) {
     let point = self.convert(event.locationInWindow, from: nil)
 
-    // 名字在圆框外，点它不起停时钟；双击才进入改名
+    // 名字右边的铅笔是改名按钮
+    if self.isTitleEditable, self.renameHintHitFrame.contains(point) {
+      self.beginTitleEditing()
+      self.updateClockFaceView()
+      return
+    }
+
+    // 名字在圆框外，点它不做事（不起停时钟，也不再双击改名）
     if self.isTitleEditable, self.titleLabel.frame.contains(point) {
-      if event.clickCount == 2 {
-        self.beginTitleEditing()
-      }
       self.updateClockFaceView()
       return
     }
@@ -330,42 +343,6 @@ extension MVClockView {
     let result = min(bounded, self.inheritedCountdownLimit ?? bounded)
     self.countdownDuration = result
     self.seconds = result
-  }
-}
-
-// MARK: - Accessibility
-
-extension MVClockView {
-  override func isAccessibilityElement() -> Bool { true }
-  override func accessibilityRole() -> NSAccessibility.Role? { .group }
-  override func accessibilityLabel() -> String? {
-    self.clockTitle.isEmpty ? "Timer" : self.clockTitle
-  }
-  override func accessibilityValue() -> Any? { self.accessibilityTimerDescription }
-
-  private var accessibilityTimerDescription: String {
-    let hours = Int(self.seconds) / 3_600
-    let mins = Int(self.minutes) % 60
-    let secs = Int(self.seconds.truncatingRemainder(dividingBy: 60))
-
-    if self.seconds <= 0, self.timerTask == nil {
-      return "准备就绪"
-    }
-
-    let timeDescription = TimerLogic.accessibilityTimeDescription(minutes: mins, seconds: secs)
-    let fullDescription = hours > 0 ? "\(hours) 小时 \(timeDescription)" : timeDescription
-
-    if self.paused {
-      return "已暂停 \(fullDescription)"
-    }
-    if self.timerTask != nil {
-      return self.mode == .stopwatch ? "已计时 \(fullDescription)" : "剩余 \(fullDescription)"
-    }
-    return fullDescription
-  }
-
-  func postAccessibilityValueChanged() {
-    NSAccessibility.post(element: self, notification: .valueChanged)
   }
 }
 

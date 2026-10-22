@@ -69,7 +69,7 @@ Once the stopwatch is running, the start time (e.g. `起始 21:30:45`) is shown 
 Right-click a window and pick **子时钟 ▸ 添加新的子时钟** (Child clock ▸ Add new child clock) to open a nested window. It looks and works exactly like the main window, keeps its own independent clock, and is labelled `子时钟1`, `子时钟2`, … by depth. The name sits outside the clock circle, below the face.
 
 - Each clock starts and pauses on its own, so every clock has its own start time. A new child clock in stopwatch mode starts running immediately.
-- Double-click a child clock's name to rename it (press <kbd>enter</kbd> to confirm, <kbd>esc</kbd> to cancel). The name is used for notifications and the Dock badge. A dim pencil sits next to the name as the hint; hovering brightens it and underlines the name. Keys typed while renaming no longer reach the clock shortcuts.
+- Click the small pencil to the right of a child clock's name to rename it (press <kbd>enter</kbd> to confirm, <kbd>esc</kbd> to cancel). The name is used for notifications and the Dock badge. The pencil is always visible next to the name; hovering brightens it and underlines the name. Keys typed while renaming no longer reach the clock shortcuts.
 - Closing a child clock leaves its parent running; closing the main clock closes the whole chain.
 - A child clock's countdown can never be longer than its parent's — drag or type a longer duration and it is capped at the parent's duration.
 - When a child clock's countdown finishes, it closes itself together with its own children (the main clock just notifies you and stays open).

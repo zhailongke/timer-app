@@ -117,7 +117,20 @@ final class TimerChildClockTests: XCTestCase {
     XCTAssertEqual(view.renameHintImageView.alphaValue, 1)
 
     view.setTitleHovered(false)
-    XCTAssertEqual(view.renameHintImageView.alphaValue, 0.45)
+    XCTAssertEqual(view.renameHintImageView.alphaValue, 0.6)
+  }
+
+  /// 铅笔图标小，点区域要往外扩一圈
+  func testRenameButtonHitAreaIsLargerThanIcon() {
+    let view = MVClockView()
+    view.isTitleEditable = true
+    view.clockTitle = "数学"
+
+    let iconFrame = view.renameHintImageView.frame
+    let hitFrame = view.renameHintHitFrame
+
+    XCTAssertTrue(hitFrame.contains(iconFrame.origin))
+    XCTAssertGreaterThan(hitFrame.width, iconFrame.width)
   }
 
   func testChildTitleIsWhite() {
