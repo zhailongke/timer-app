@@ -37,10 +37,7 @@ extension AppDelegate {
 
     default:
       guard let seconds = self.parseTimeInput(input), seconds > 0 else { return }
-      // 显式时长就是倒计时，先把全局模式对齐，再启动（默认秒表下也要能这样用）
-      if self.currentMode != .countdown {
-        self.toggleStopwatchMode()
-      }
+      // 显式时长就是倒计时，只把这个时钟切过去（startTimer 自己会切模式）
       clockView.startTimer(seconds: seconds)
     }
 

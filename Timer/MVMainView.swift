@@ -9,6 +9,9 @@ final class MVMainView: NSView {
   weak var controller: MVTimerController? {
     didSet {
       self.addChildMenuItem.target = self.controller
+      // 模式是这个时钟自己的：菜单直接指到本窗口的控制器，不经过全局
+      self.countdownMenuItem.target = self.controller
+      self.stopwatchMenuItem.target = self.controller
     }
   }
 
@@ -24,13 +27,13 @@ final class MVMainView: NSView {
 
   private let countdownMenuItem = NSMenuItem(
     title: "倒计时模式",
-    action: #selector(AppDelegate.switchToCountdown(_:)),
+    action: #selector(MVTimerController.switchToCountdown(_:)),
     keyEquivalent: ""
   )
 
   private let stopwatchMenuItem = NSMenuItem(
     title: "秒表模式",
-    action: #selector(AppDelegate.switchToStopwatch(_:)),
+    action: #selector(MVTimerController.switchToStopwatch(_:)),
     keyEquivalent: ""
   )
 
@@ -74,9 +77,6 @@ final class MVMainView: NSView {
 
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
-
-    self.countdownMenuItem.target = NSApplication.shared.delegate
-    self.stopwatchMenuItem.target = NSApplication.shared.delegate
 
     NotificationCenter.default.addObserver(
       self,
@@ -206,9 +206,10 @@ final class MVMainView: NSView {
 
 extension MVMainView: NSMenuDelegate {
   func menuWillOpen(_: NSMenu) {
-    guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
-    self.countdownMenuItem.state = appDelegate.currentMode == .countdown ? .on : .off
-    self.stopwatchMenuItem.state = appDelegate.currentMode == .stopwatch ? .on : .off
+    // 勾当前这个时钟自己的模式
+    let mode = self.clockView?.mode
+    self.countdownMenuItem.state = mode == .countdown ? .on : .off
+    self.stopwatchMenuItem.state = mode == .stopwatch ? .on : .off
 
     // 只有子时钟有名字，主时钟不显示「保存为模板」
     let isChild = self.controller?.isChild ?? false

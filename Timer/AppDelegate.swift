@@ -14,8 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
   }
 
-  /// 启动即为秒表模式；按 Tab（或 s）切回倒计时
-  private(set) var currentMode: TimerMode = .stopwatch
+  /// 新开窗口的默认模式：最近一次切到的那个。已经在跑的时钟互不影响
+  private(set) var lastUsedMode: TimerMode = .stopwatch
 
   override init() {
     super.init()
@@ -106,35 +106,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   /// 登记新窗口（主窗口、CMD+N 新窗口、子时钟都走这里）
   func registerController(_ controller: MVTimerController) {
     self.controllers.append(controller)
-    controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
-    controller.setMode(self.currentMode)
+    controller.setMode(self.lastUsedMode)
     self.applyWindowPresentation()
   }
 
-  // MARK: - 秒表模式
+  // MARK: - 计时模式
 
-  /// 在倒计时 / 秒表之间切换，切换即重置
-  @objc func toggleStopwatchMode() {
-    self.currentMode = self.currentMode == .countdown ? .stopwatch : .countdown
-    for controller in self.controllers {
-      controller.setMode(self.currentMode)
-    }
-    self.applyWindowPresentation()
-  }
-
-  /// 右键菜单直接指定模式（不是来回切），两个入口分别对应倒计时 / 秒表
-  @objc func switchToCountdown(_: NSMenuItem) {
-    self.applyMode(.countdown)
-  }
-
-  @objc func switchToStopwatch(_: NSMenuItem) {
-    self.applyMode(.stopwatch)
-  }
-
-  private func applyMode(_ mode: TimerMode) {
-    if self.currentMode != mode {
-      self.toggleStopwatchMode()
-    }
+  /// 某个时钟切了模式：只有它自己跟着变，顺手把它记成新窗口的默认模式
+  func modeDidChange(to mode: TimerMode, in controller: MVTimerController) {
+    self.lastUsedMode = mode
+    self.applyWindowPresentation(for: controller)
   }
 
   @objc func toggleStaysOnTop(_ sender: NSMenuItem) {
@@ -218,19 +199,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
   }
 
-  private var windowLevel: NSWindow.Level {
-    (self.staysOnTop || self.currentMode == .stopwatch) ? .floating : .normal
+  /// 秒表要求"悬停在任何窗口之上"：浮窗级别 + 可加入所有 Space（含全屏 App 所在 Space）
+  /// 各时钟各算各的：秒表浮起来，倒计时按普通窗口走（除非开了窗口置顶）
+  private func applyWindowPresentation() {
+    for controller in self.controllers {
+      self.applyWindowPresentation(for: controller)
+    }
+    // 历史记录 / 模板管理等非时钟窗口：只跟「窗口置顶」走
+    for window in NSApplication.shared.windows where !(window.windowController is MVTimerController) {
+      self.applyPresentation(to: window, floats: self.staysOnTop)
+    }
   }
 
-  /// 秒表要求"悬停在任何窗口之上"：浮窗级别 + 可加入所有 Space（含全屏 App 所在 Space）
-  private func applyWindowPresentation() {
-    for window in NSApplication.shared.windows {
-      window.level = self.windowLevel
-      if self.currentMode == .stopwatch {
-        window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
-      } else {
-        window.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
-      }
+  func applyWindowPresentation(for controller: MVTimerController) {
+    guard let window = controller.window else { return }
+    self.applyPresentation(to: window, floats: self.staysOnTop || controller.clockView.mode == .stopwatch)
+  }
+
+  private func applyPresentation(to window: NSWindow, floats: Bool) {
+    window.level = floats ? .floating : .normal
+    if floats {
+      window.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+    } else {
+      window.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
     }
   }
 

@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Switching between countdown and stopwatch resets the clock
 - Stopwatch windows float above every other window, including full screen apps
 - Duration-setting input (digits, backspace, scroll wheel, ±minutes) is disabled in stopwatch mode
+- Each clock keeps its own mode: switching a child clock (Tab / S / right-click 倒计时模式 / 秒表模式) no longer switches or resets its parent or any other window; a window floats above others when that window itself is in stopwatch mode, and new windows open in the mode used last
 
 ## [2.1.0] - 2026-02-07
 

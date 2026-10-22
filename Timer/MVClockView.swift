@@ -112,6 +112,9 @@ final class MVClockView: NSView {
   var mode: TimerMode = .stopwatch {
     didSet {
       self.arrowView.isHidden = self.mode == .stopwatch
+      if oldValue != self.mode {
+        self.onModeChanged?(self.mode)
+      }
     }
   }
   var lastTimerSeconds: CGFloat?
@@ -146,8 +149,10 @@ final class MVClockView: NSView {
   var justEndedTitleEditing = false
   /// 回车提交改名后，那个 keyUp 会漏到快捷键里被当成"起停"，下一次 keyUp 要丢掉
   var swallowNextReturnKeyUp = false
-  /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
+  /// 按 s 键请求切换模式，只切这个时钟自己
   var onModeToggleRequest: (() -> Void)?
+  /// 模式真的变了（Tab / s / 右键 / 模板都会走这里），用来同步窗口置顶
+  var onModeChanged: ((TimerMode) -> Void)?
   var inDock: Bool = false {
     didSet {
       if !self.inDock {

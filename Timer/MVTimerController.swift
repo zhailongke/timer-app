@@ -49,6 +49,9 @@ final class MVTimerController: NSWindowController {
     mainView.clockView = self.clockView
     self.clockView.onTimerComplete = { [weak self] in self?.handleClockTimer() }
     self.clockView.onStart = { [weak self] in self?.ensureHistoryRecord() }
+    // 模式是这个时钟自己的事：Tab / s 只切自己，切完同步一下这个窗口的置顶
+    self.clockView.onModeToggleRequest = { [weak self] in self?.toggleMode() }
+    self.clockView.onModeChanged = { [weak self] mode in self?.handleModeChange(mode) }
     mainView.addSubview(self.clockView)
     self.dockMenuItem = mainView.menuItem
 
@@ -100,8 +103,22 @@ final class MVTimerController: NSWindowController {
     }
   }
 
+  /// 只切这个时钟的模式；别的同时钟（上级 / 下级 / 别的窗口）一概不动
   func setMode(_ mode: TimerMode) {
     self.clockView.setMode(mode)
+  }
+
+  /// 右键直接指定模式（不是来回切）
+  @objc func switchToCountdown(_: Any?) {
+    self.setMode(.countdown)
+  }
+
+  @objc func switchToStopwatch(_: Any?) {
+    self.setMode(.stopwatch)
+  }
+
+  private func handleModeChange(_ mode: TimerMode) {
+    (NSApplication.shared.delegate as? AppDelegate)?.modeDidChange(to: mode, in: self)
   }
 
   func showInDock(_ state: Bool) {
@@ -196,11 +213,11 @@ final class MVTimerController: NSWindowController {
     // Intentionally empty
   }
 
-  /// Tab / s 键切换倒计时与秒表，实际切换统一交给 AppDelegate（含窗口置顶）
+  /// Tab / s 键：只切这个时钟自己的倒计时 / 秒表
   func toggleMode() {
     // 正在改名字时 Tab 归输入框，不要切模式
     guard !self.clockView.isEditingTitle else { return }
-    self.clockView.onModeToggleRequest?()
+    self.setMode(self.clockView.mode == .countdown ? .stopwatch : .countdown)
   }
 
   func pickSound(_ index: Int) {

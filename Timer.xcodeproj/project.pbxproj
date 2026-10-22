@@ -61,6 +61,7 @@
 		CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001700000000 /* TimerTemplateTests.swift */; };
 		CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001800000000 /* TimerHistoryTests.swift */; };
 		CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000017CCCC001700000000 /* TimerChildClockTests.swift */; };
+		CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -137,6 +138,7 @@
 		CC000016CCCC001700000000 /* TimerTemplateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerTemplateTests.swift; sourceTree = "<group>"; };
 		CC000016CCCC001800000000 /* TimerHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerHistoryTests.swift; sourceTree = "<group>"; };
 		CC000017CCCC001700000000 /* TimerChildClockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChildClockTests.swift; sourceTree = "<group>"; };
+		CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerModeIndependenceTests.swift; sourceTree = "<group>"; };
 		DD000001DDDD000100000000 /* TimerScriptCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerScriptCommand.swift; sourceTree = "<group>"; };
 		DD000002DDDD000200000000 /* Timer.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Timer.sdef; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -244,6 +246,8 @@
 				CC000016CCCC001700000000 /* TimerTemplateTests.swift */,
 				CC000016CCCC001800000000 /* TimerHistoryTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
+				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
+				CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */,
 			);
 			path = TimerTests;
 			sourceTree = "<group>";
@@ -445,6 +449,8 @@
 				CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */,
 				CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
+				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
+				CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
