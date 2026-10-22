@@ -61,3 +61,13 @@ Timer opens in stopwatch mode by default; press <kbd>tab</kbd> to switch to coun
 Digits, backspace, scroll wheel and ±minute keys are disabled in stopwatch mode — there is no duration to set. Elapsed time has no upper limit; the progress ring wraps around once per hour.
 
 Once the stopwatch is running, the start time (e.g. `起始 21:30:45`) is shown under the elapsed time. It stays at the original start when you pause and resume, and disappears on reset.
+
+### Child clocks
+
+Right-click a window and pick **添加子时钟** (Add child clock) to open a nested window. It looks and works exactly like the main window, keeps its own independent clock, and is labelled `子时钟1`, `子时钟2`, … by depth.
+
+- Each clock starts and pauses on its own, so every clock has its own start time.
+- Closing a child clock leaves its parent running; closing the main clock closes the whole chain.
+- A child clock's countdown can never be longer than its parent's — drag or type a longer duration and it is capped at the parent's duration.
+- When a child clock's countdown finishes, it closes itself together with its own children (the main clock just notifies you and stays open).
+- For now children can only be nested one under another; sibling clocks are not implemented yet.

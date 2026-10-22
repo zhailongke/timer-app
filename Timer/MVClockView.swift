@@ -5,8 +5,8 @@ final class MVClockView: NSView {
 
   /// 内部所有坐标都按这个尺寸设计，缩放窗口时靠 frame / bounds 的比值整体放大缩小
   static let designSize: CGFloat = 150
-  private static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
-  private static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
+  static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
+  static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
 
   private let progressView = MVClockProgressView()
   private let arrowView = MVClockArrowView(center: CGPoint(x: 75, y: 75))
@@ -19,7 +19,7 @@ final class MVClockView: NSView {
     return view
   }()
 
-  private let timerTimeLabel: MVLabel = {
+  let timerTimeLabel: MVLabel = {
     let label = MVLabel(frame: NSRect(x: 0, y: 94, width: 150, height: 20))
     label.font = NSFont.systemFont(ofSize: 15, weight: .medium)
     label.alignment = .center
@@ -27,7 +27,7 @@ final class MVClockView: NSView {
     return label
   }()
 
-  private let minutesLabel: MVLabel = {
+  let minutesLabel: MVLabel = {
     let label = MVLabel(frame: NSRect(x: 0, y: 57, width: 150, height: 30))
     label.string = ""
     label.font = MVClockView.minutesFont
@@ -36,7 +36,7 @@ final class MVClockView: NSView {
     return label
   }()
 
-  private let secondsLabel: MVLabel = {
+  let secondsLabel: MVLabel = {
     let label = MVLabel(frame: NSRect(x: 0, y: 38, width: 150, height: 20))
     label.font = MVClockView.secondsFont
     label.alignment = .center
@@ -45,7 +45,7 @@ final class MVClockView: NSView {
   }()
 
   /// 秒表开始计时后，在大号时间下方显示起跑时刻
-  private let startTimeLabel: MVLabel = {
+  let startTimeLabel: MVLabel = {
     let label = MVLabel(frame: NSRect(x: 0, y: 37, width: 150, height: 18))
     label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
     label.alignment = .center
@@ -53,17 +53,26 @@ final class MVClockView: NSView {
     return label
   }()
 
-  private let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
-  private let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
-  private let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
+  /// 子时钟的层级标题，例如「子时钟1」；主时钟为空
+  private let titleLabel: MVLabel = {
+    let label = MVLabel(frame: NSRect(x: 0, y: 18, width: 150, height: 14))
+    label.font = NSFont.systemFont(ofSize: 10, weight: .medium)
+    label.alignment = .center
+    label.textColor = MVResource.color("seconds")
+    return label
+  }()
+
+  let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
+  let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
+  let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
   /// 顶部时钟用 jj:mm，秒表起始时刻用 jj:mm:ss，都跟随系统 12/24 小时制
   private static func formatter(template: String) -> DateFormatter {
     let formatter = DateFormatter()
     formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: template, options: 0, locale: Locale.current)
     return formatter
   }
-  private lazy var timerTimeLabelFormatter = MVClockView.formatter(template: "jj:mm")
-  private lazy var startTimeFormatter = MVClockView.formatter(template: "jj:mm:ss")
+  lazy var timerTimeLabelFormatter = MVClockView.formatter(template: "jj:mm")
+  lazy var startTimeFormatter = MVClockView.formatter(template: "jj:mm:ss")
   var inputSeconds: Bool = false
   /// 默认秒表模式；秒表没有可调箭头，拖拽设定时长只在倒计时下有意义
   var mode: TimerMode = .stopwatch {
@@ -72,6 +81,15 @@ final class MVClockView: NSView {
     }
   }
   var lastTimerSeconds: CGFloat?
+  /// 上级时钟（子时钟持有），用于继承倒计时时长上限
+  weak var parentClockView: MVClockView?
+  /// 本次设定的倒计时时长，下级时钟不能比它更长
+  var countdownDuration: CGFloat = 0
+  /// 界面上标记的层级名，例如「子时钟1」；主时钟为空
+  var clockTitle: String {
+    get { self.titleLabel.string }
+    set { self.titleLabel.string = newValue }
+  }
   /// 按 s 键请求切换模式，由 AppDelegate 统一处理（含窗口置顶）
   var onModeToggleRequest: (() -> Void)?
   var inDock: Bool = false {
@@ -155,6 +173,7 @@ final class MVClockView: NSView {
     self.addSubview(self.minutesLabel)
     self.addSubview(self.secondsLabel)
     self.addSubview(self.startTimeLabel)
+    self.addSubview(self.titleLabel)
 
     self.arrowView.isHidden = self.mode == .stopwatch
     self.startTimeLabel.string = ""
@@ -234,7 +253,7 @@ extension MVClockView {
     } else {
       seconds -= seconds.truncatingRemainder(dividingBy: 60)
     }
-    self.seconds = seconds
+    self.setCountdownSeconds(seconds)
     self.updateTimerTime()
 
     self.stop()
@@ -273,7 +292,7 @@ extension MVClockView {
     self.mode = newMode
     self.paused = false
     self.stop()
-    self.seconds = 0
+    self.setCountdownSeconds(0)
     self.stopwatchAccumulated = 0
     self.stopwatchStartDate = nil
     self.stopwatchOriginDate = nil
@@ -305,71 +324,6 @@ extension MVClockView {
       return
     }
     self.timerTime = Date(timeIntervalSinceNow: Double(self.seconds))
-  }
-
-  private func updateLabels() {
-    if self.mode == .stopwatch {
-      self.updateStopwatchLabel()
-      return
-    }
-
-    self.startTimeLabel.string = ""
-    self.minutesLabel.font = Self.minutesFont
-    self.minutesLabel.string = TimerLogic.minutesDisplayString(seconds: self.seconds)
-    let suffixWidth: CGFloat = self.seconds < 60 ? self.minutesLabelSecondsSuffixWidth : self.minutesLabelSuffixWidth
-    self.minutesLabel.sizeToFit()
-
-    var frame = self.minutesLabel.frame
-    frame.origin.x = round((self.bounds.width - (frame.size.width - suffixWidth)) / 2)
-    self.minutesLabel.frame = frame
-
-    self.secondsLabel.string = TimerLogic.secondsDisplayString(seconds: self.seconds)
-    if self.seconds >= 60 {
-      self.secondsLabel.sizeToFit()
-
-      frame = self.secondsLabel.frame
-      frame.origin.x = round((self.bounds.width - (frame.size.width - self.secondsSuffixWidth)) / 2)
-      self.secondsLabel.frame = frame
-    }
-  }
-
-  /// 秒表：整块显示「时:分:秒」，字号按宽度自适应，隐藏小号秒标签
-  private func updateStopwatchLabel() {
-    let text = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
-    self.minutesLabel.string = text
-    self.minutesLabel.font = MVLabel.monospacedDigitFont(fitting: text, maxWidth: 120)
-    self.secondsLabel.string = ""
-
-    self.minutesLabel.sizeToFit()
-    var frame = self.minutesLabel.frame
-    frame.origin.x = round((self.bounds.width - frame.size.width) / 2)
-    self.minutesLabel.frame = frame
-
-    self.updateStartTimeLabel()
-  }
-
-  /// 只在秒表跑起来（含暂停）之后显示起始时刻，归零/切模式后清空
-  func updateStartTimeLabel() {
-    guard let origin = self.stopwatchOriginDate, self.timerTask != nil || self.paused else {
-      self.startTimeLabel.string = ""
-      return
-    }
-    self.startTimeLabel.string = "起始 \(self.startTimeFormatter.string(from: origin))"
-  }
-
-  private func updateTimeLabel() {
-    let timeString = self.timerTimeLabelFormatter.string(from: self.timerTime ?? Date())
-    self.timerTimeLabel.string = timeString
-
-    if let ampmRange = (
-      timeString.range(of: " AM", options: [.caseInsensitive]) ??
-      timeString.range(of: " PM", options: [.caseInsensitive])
-    ) {
-      self.timerTimeLabel.setFont(
-        NSFont.systemFont(ofSize: 12, weight: .medium),
-        range: NSRange(ampmRange, in: timeString)
-      )
-    }
   }
 
   /// 窗口缩放时 frame 会变，bounds 始终保持设计尺寸，内部子视图因此自动等比缩放

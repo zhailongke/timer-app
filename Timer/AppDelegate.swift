@@ -26,8 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     MVMenu.installMainMenuIfNeeded()
 
     let controller = MVTimerController()
-    self.controllers.append(controller)
-    controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
+    self.registerController(controller)
     self.addBadgeToDock(controller: controller)
 
     UNUserNotificationCenter.current().delegate = self
@@ -184,6 +183,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
   @objc func newDocument(_: AnyObject?) {
     let controller = MVTimerController(closeToWindow: NSApplication.shared.keyWindow)
+    self.registerController(controller)
+  }
+
+  /// 登记新窗口（主窗口、CMD+N 新窗口、子时钟都走这里）
+  func registerController(_ controller: MVTimerController) {
     self.controllers.append(controller)
     controller.clockView.onModeToggleRequest = { [weak self] in self?.toggleStopwatchMode() }
     controller.setMode(self.currentMode)
@@ -213,9 +217,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   }
 
   private func handleClose(_ notification: MVNotification) {
-    if let window = notification.object as? NSWindow,
-      let controller = window.windowController as? MVTimerController,
-      controller != self.currentlyInDock,
+    guard let window = notification.object as? NSWindow,
+      let controller = window.windowController as? MVTimerController
+    else { return }
+
+    // 关掉一个时钟，它的所有下级跟着关（主时钟关闭 → 整棵树关闭）
+    for child in controller.childControllers where child.window != nil {
+      child.closeHierarchy()
+    }
+    controller.childControllers.removeAll()
+    controller.parentController?.childControllers.removeAll { $0 === controller }
+
+    if controller != self.currentlyInDock,
       let index = self.controllers.firstIndex(of: controller) {
       self.controllers.remove(at: index)
     }

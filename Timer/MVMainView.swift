@@ -6,7 +6,10 @@ final class MVMainView: NSView {
     MVResource.color("backgroundBottom")
   ])
 
-  weak var controller: MVTimerController?
+  weak var controller: MVTimerController? {
+    didSet { self.addChildMenuItem.target = self.controller }
+  }
+
   weak var clockView: MVClockView? {
     didSet { self.tileClockView() }
   }
@@ -17,6 +20,12 @@ final class MVMainView: NSView {
   private let stopwatchMenuItem = NSMenuItem(
     title: "秒表模式",
     action: #selector(AppDelegate.toggleStopwatchMode(_:)),
+    keyEquivalent: ""
+  )
+
+  private let addChildMenuItem = NSMenuItem(
+    title: "添加子时钟",
+    action: #selector(MVTimerController.addChildClock(_:)),
     keyEquivalent: ""
   )
 
@@ -63,6 +72,7 @@ final class MVMainView: NSView {
     }
 
     self.contextMenu.addItem(self.stopwatchMenuItem)
+    self.contextMenu.addItem(self.addChildMenuItem)
     if let menuItem = self.menuItem {
       self.contextMenu.addItem(menuItem)
     }

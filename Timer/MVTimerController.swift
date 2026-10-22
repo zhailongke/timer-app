@@ -6,10 +6,37 @@ final class MVTimerController: NSWindowController {
   private weak var dockMenuItem: NSMenuItem?
   let clockView = MVClockView()
 
+  /// 上级时钟；主时钟为 nil。关闭下级不影响上级，关闭上级会带走整棵子树
+  private(set) weak var parentController: MVTimerController?
+  /// 下级时钟。目前只能一层层往下加（同层并列留作后续）
+  var childControllers: [MVTimerController] = []
+  /// 主时钟为 0，子时钟按层级递增，界面上标记「子时钟N」
+  private(set) var depth: Int = 0
+
   private var audioPlayer: AVAudioPlayer? // player must be kept in memory
   private var soundURL = Bundle.main.url(forResource: "alert-sound", withExtension: "caf")
 
   convenience init() {
+    self.init(parent: nil)
+  }
+
+  convenience init(closeToWindow: NSWindow?) {
+    self.init(parent: nil)
+
+    // Secondary windows don't need autosave — clear it so they
+    // don't overwrite the primary window's saved position.
+    self.windowFrameAutosaveName = ""
+
+    if let closeToWindow {
+      var point = closeToWindow.frame.origin
+      point.x += CGFloat(Int.random(in: -40...39))
+      point.y += CGFloat(Int.random(in: -40...39))
+      self.window?.setFrameOrigin(point)
+    }
+  }
+
+  /// parent 非空时创建的是子时钟：标记层级、继承倒计时上限、摆在上级窗口旁边
+  convenience init(parent: MVTimerController?) {
     let mainView = MVMainView(frame: .zero)
 
     let window = MVWindow(mainView: mainView)
@@ -31,22 +58,36 @@ final class MVTimerController: NSWindowController {
       self.soundURL = nil
     }
 
+    if let parent {
+      self.parentController = parent
+      self.depth = parent.depth + 1
+      parent.childControllers.append(self)
+      self.clockView.parentClockView = parent.clockView
+      self.clockView.clockTitle = "子时钟\(self.depth)"
+      self.windowFrameAutosaveName = ""
+      window.setFrameOrigin(Self.originForChild(of: parent))
+    }
+
     window.makeKeyAndOrderFront(self)
   }
 
-  convenience init(closeToWindow: NSWindow?) {
-    self.init()
+  /// 子时钟摆在上级时钟右侧；右边放不下就换到下一行
+  private static func originForChild(of parent: MVTimerController) -> NSPoint {
+    guard let frame = parent.window?.frame else { return NSPoint(x: 200, y: 200) }
 
-    // Secondary windows don't need autosave — clear it so they
-    // don't overwrite the primary window's saved position.
-    self.windowFrameAutosaveName = ""
+    let gap: CGFloat = 12
+    var origin = NSPoint(x: frame.maxX + gap, y: frame.minY)
 
-    if let closeToWindow {
-      var point = closeToWindow.frame.origin
-      point.x += CGFloat(Int.random(in: -40...39))
-      point.y += CGFloat(Int.random(in: -40...39))
-      self.window?.setFrameOrigin(point)
+    if let screen = NSScreen.main?.visibleFrame {
+      if origin.x + frame.width > screen.maxX {
+        origin.x = frame.minX
+        origin.y = frame.minY - frame.height - gap
+      }
+      if origin.y < screen.minY {
+        origin.y = screen.maxY - frame.height
+      }
     }
+    return origin
   }
 
   deinit {
@@ -77,7 +118,7 @@ final class MVTimerController: NSWindowController {
 
   private func handleClockTimer() {
     let content = UNMutableNotificationContent()
-    content.title = "It's time! 🕘"
+    content.title = self.clockView.clockTitle.isEmpty ? "It's time! 🕘" : "\(self.clockView.clockTitle) 到点了 🕘"
 
     let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
     UNUserNotificationCenter.current().add(request)
@@ -85,6 +126,27 @@ final class MVTimerController: NSWindowController {
     NSApplication.shared.requestUserAttention(.criticalRequest)
 
     self.playAlarmSound()
+
+    // 子时钟倒计时结束即自动关闭（连同它的下级）
+    if self.parentController != nil {
+      self.closeHierarchy()
+    }
+  }
+
+  /// 右键「添加子时钟」：新建一个下级窗口，外观功能一致、独立计时
+  @objc func addChildClock(_: Any?) {
+    guard let appDelegate = NSApplication.shared.delegate as? AppDelegate else { return }
+
+    let child = MVTimerController(parent: self)
+    appDelegate.registerController(child)
+  }
+
+  /// 关闭自己及所有下级；上级不受影响
+  func closeHierarchy() {
+    for child in self.childControllers {
+      child.closeHierarchy()
+    }
+    self.window?.close()
   }
 
   /// Tab 键码；MVWindow 与这里共用，避免两处各写一份

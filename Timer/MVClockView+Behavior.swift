@@ -38,7 +38,7 @@ extension MVClockView {
       newSeconds -= newSeconds.truncatingRemainder(dividingBy: 60)
     }
 
-    self.seconds = newSeconds
+    self.setCountdownSeconds(newSeconds)
     self.updateTimerTime()
   }
 
@@ -100,7 +100,7 @@ extension MVClockView {
 
   private func restartLastTimer() {
     if self.timerTask == nil, !self.paused, let seconds = self.lastTimerSeconds {
-      self.seconds = seconds
+      self.setCountdownSeconds(seconds)
       self.handleClick()
     }
   }
@@ -111,14 +111,14 @@ extension MVClockView {
   }
 
   private func adjustMinutes(by minutes: Int) {
-    self.seconds = max(0, self.seconds + CGFloat(minutes * 60))
+    self.setCountdownSeconds(self.seconds + CGFloat(minutes * 60))
     self.updateTimerTime()
   }
 
   private func resetTimer() {
     self.paused = false
     self.stop()
-    self.seconds = 0
+    self.setCountdownSeconds(0)
     self.stopwatchAccumulated = 0
     self.stopwatchStartDate = nil
     self.stopwatchOriginDate = nil
@@ -131,10 +131,12 @@ extension MVClockView {
     let currentMinutes = floor(self.seconds / 60)
     self.paused = false
     self.stop()
-    self.seconds = TimerLogic.processBackspace(
-      currentSeconds: currentSeconds,
-      currentMinutes: currentMinutes,
-      inputSeconds: self.inputSeconds
+    self.setCountdownSeconds(
+      TimerLogic.processBackspace(
+        currentSeconds: currentSeconds,
+        currentMinutes: currentMinutes,
+        inputSeconds: self.inputSeconds
+      )
     )
     self.updateTimerTime()
   }
@@ -154,7 +156,7 @@ extension MVClockView {
     if result.accepted {
       self.paused = false
       self.stop()
-      self.seconds = result.seconds
+      self.setCountdownSeconds(result.seconds)
       self.updateTimerTime()
     }
   }
@@ -208,7 +210,7 @@ extension MVClockView {
     self.setMode(.countdown)
     self.paused = false
     self.stop()
-    self.seconds = seconds
+    self.setCountdownSeconds(seconds)
     self.updateTimerTime()
     self.start()
   }
@@ -267,12 +269,38 @@ extension MVClockView {
   }
 }
 
+// MARK: - 子时钟时长约束
+
+extension MVClockView {
+  /// 下级时钟能设到的最大时长：自己设了倒计时就用自己的，否则继续往上级传
+  var countdownLimit: CGFloat? {
+    if self.mode == .countdown, self.countdownDuration > 0 {
+      return self.countdownDuration
+    }
+    return self.parentClockView?.countdownLimit
+  }
+
+  private var inheritedCountdownLimit: CGFloat? {
+    self.parentClockView?.countdownLimit
+  }
+
+  /// 设定倒计时时长：拖拽、输入、启动都走这里，不能超过上级，同时记录供下级继承
+  func setCountdownSeconds(_ value: CGFloat) {
+    let bounded = max(0, value)
+    let result = min(bounded, self.inheritedCountdownLimit ?? bounded)
+    self.countdownDuration = result
+    self.seconds = result
+  }
+}
+
 // MARK: - Accessibility
 
 extension MVClockView {
   override func isAccessibilityElement() -> Bool { true }
   override func accessibilityRole() -> NSAccessibility.Role? { .group }
-  override func accessibilityLabel() -> String? { "Timer" }
+  override func accessibilityLabel() -> String? {
+    self.clockTitle.isEmpty ? "Timer" : self.clockTitle
+  }
   override func accessibilityValue() -> Any? { self.accessibilityTimerDescription }
 
   private var accessibilityTimerDescription: String {
