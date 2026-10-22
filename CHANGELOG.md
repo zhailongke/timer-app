@@ -25,9 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - The click that ends a rename no longer also starts/stops the clock
 - The rename affordance is now a blue round button (pencil symbol) aligned with the name text, matching the top-right pause button
 - Templates can now be managed
-- New history feature
-- History records are now created the moment a clock starts (not only when it closes): the duration grows live, child clocks attach under their parent's record right away, and missing ancestor records are created automatically so a running child always has somewhere to hang
-- History no longer disappears on close: records live in one persisted tree from start to finish, are flushed to disk on quit, and the open history window refreshes itself every second: every clock session is recorded (start time, duration, end time), named after its start time. Closing a clock ends one record; 记入历史 saves a record with the end time set to now (shown as 至今) so still-running child clocks are kept too
+- New history feature: every clock session is recorded (start time, duration, end time), named after its start time; closing a clock ends one record
+- History records are created the moment a clock starts (not only when they are closed): the duration grows live, child clocks attach under their parent's record right away, and missing ancestor records are created automatically so a running child always has somewhere to hang
+- History no longer disappears on close: records live in one persisted tree from start to finish, are flushed to disk on quit, and the open history window refreshes itself every second
 - 历史记录… opens a window instead of a menu list: root level is one row per main clock session, click into a row to drill down through its child clock records, with rename and delete: 子时钟 ▸ 管理模板… opens a window listing every template with 修改… (name / mode / duration / auto-start, plus child names) and 删除 (with confirmation)
 - The rename input field starts short and grows with the typed name instead of always spanning the full width
 - Pressing enter to confirm a rename no longer leaks its key-up to the clock and toggles start/stop: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)

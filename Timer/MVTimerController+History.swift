@@ -13,9 +13,4 @@ extension MVTimerController {
   func finalizeHistoryRecord() {
     MVHistoryTracker.shared.finalize(controller: self)
   }
-
-  /// 右键「另起一条记录」：不关闭也把这一段结算掉，立刻开新的一条
-  @objc func addHistoryRecord(_: Any?) {
-    MVHistoryTracker.shared.cutRecord(for: self)
-  }
 }

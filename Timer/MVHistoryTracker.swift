@@ -14,8 +14,8 @@ final class MVHistoryTracker {
 
   private var tickTask: Task<Void, Never>?
   private var lastSaveDate = Date.distantPast
-  /// 每条进行中的记录开始那一刻，时钟已经走过的秒数：
-  /// 「另起一条」之后秒表还在继续走，时长要减掉这个底数才算新这一段
+  /// 每条记录建出来那一刻，时钟已经走过的秒数：
+  /// 时长要减掉它才算这一段自己的（比如在历史里删掉了还在跑的那条，重新建出来时秒表已经走了一段）
   private var elapsedBaselines: [UUID: TimeInterval] = [:]
 
   init(defaults: UserDefaults = .standard) {
@@ -65,12 +65,6 @@ final class MVHistoryTracker {
       elapsed: self.liveElapsed(for: controller, recordID: id),
       title: controller.clockView.clockTitle
     )
-  }
-
-  /// 右键「另起一条记录」：不关闭也把这一段结算掉，立刻开新的一条
-  func cutRecord(for controller: MVTimerController) {
-    self.finalize(controller: controller)
-    self.ensureRecord(for: controller)
   }
 
   /// 这一段真正走过的秒数：秒表的总走过时间要减掉开始时的底数

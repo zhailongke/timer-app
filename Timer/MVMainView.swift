@@ -9,8 +9,6 @@ final class MVMainView: NSView {
   weak var controller: MVTimerController? {
     didSet {
       self.addChildMenuItem.target = self.controller
-      self.saveTemplateMenuItem.target = self.controller
-      self.recordHistoryMenuItem.target = self.controller
     }
   }
 
@@ -33,13 +31,6 @@ final class MVMainView: NSView {
   private let stopwatchMenuItem = NSMenuItem(
     title: "秒表模式",
     action: #selector(AppDelegate.switchToStopwatch(_:)),
-    keyEquivalent: ""
-  )
-
-  /// 不关闭也能把这一段结算掉，立刻开新的一条
-  private let recordHistoryMenuItem = NSMenuItem(
-    title: "另起一条记录",
-    action: #selector(MVTimerController.addHistoryRecord(_:)),
     keyEquivalent: ""
   )
 
@@ -119,11 +110,9 @@ final class MVMainView: NSView {
 
     self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
     self.historyMenuItem.target = NSApplication.shared.delegate
-    self.recordHistoryMenuItem.toolTip = "把这次计时结算成一条记录，立刻开始新的一条（不关闭时钟）"
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)
-    self.contextMenu.addItem(self.recordHistoryMenuItem)
     self.contextMenu.addItem(self.historyMenuItem)
     if let menuItem = self.menuItem {
       self.contextMenu.addItem(menuItem)

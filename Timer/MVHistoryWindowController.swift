@@ -157,7 +157,7 @@ final class MVHistoryWindowController: NSWindowController {
     self.deleteButton.isEnabled = record != nil
 
     self.hintLabel.stringValue = self.currentRecords.isEmpty
-      ? "还没有记录：一点开始计时就有，或右键选「记入历史」"
+      ? "还没有记录：一点开始计时就有"
       : "双击一行可以看下级记录"
   }
 
