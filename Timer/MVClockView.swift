@@ -83,14 +83,14 @@ final class MVClockView: NSView {
     return field
   }()
 
-  /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号
-  let controlButton = MVClockControlButton(frame: NSRect(x: 120, y: 120, width: 22, height: 22))
+  /// 右上角的暂停 / 继续按钮，蓝底圆点 + 白色符号；中心与左上角两个交通灯齐平
+  let controlButton = MVClockControlButton(frame: NSRect(x: 124, y: 125, width: 18, height: 18))
 
   /// 名字右边的改名按钮（蓝色圆点 + 铅笔）：点它进入改名；只有能改名的子时钟才显示
   let renameButton = MVRenameButton(frame: NSRect(x: 111, y: 1, width: 14, height: 14))
 
   /// 右上角的置顶按钮：紧挨着暂停 / 继续按钮左边，同样大小，管这个窗口浮不浮在其他窗口之上
-  let pinButton = MVPinButton(frame: NSRect(x: 92, y: 120, width: 22, height: 22))
+  let pinButton = MVPinButton(frame: NSRect(x: 100, y: 125, width: 18, height: 18))
 
   /// 按钮小，点击区域往外扩一圈，好点
   var renameHitFrame: NSRect {
