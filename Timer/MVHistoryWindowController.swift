@@ -10,8 +10,23 @@ final class MVHistoryWindowController: NSWindowController {
   /// 一层层点进来的记录 id；空就是根层（每次主时钟）
   private var path: [UUID] = []
 
-  private let tableView = NSTableView(frame: .zero)
+  /// 日期区间筛选：只按最外层那条记录的起始时间筛
+  var filter: MVHistoryDateFilter?
+  /// 列表排序；默认起始时间倒序，最新的在最上面
+  var sort = MVHistorySort()
+
+  let tableView = NSTableView(frame: .zero)
   private let pathLabel = NSTextField(labelWithString: "历史记录")
+  /// 当前层级「共 N 条 · 合计 …」；筛选条那边要用，不加 private
+  let statsLabel = NSTextField(labelWithString: "")
+  let rangeButton = NSButton(title: "全部记录", target: nil, action: nil)
+  let presetControl = NSSegmentedControl(
+    labels: ["今天", "昨天", "近 7 天", "近 30 天", "全部"],
+    trackingMode: .momentary,
+    target: nil,
+    action: nil
+  )
+  var calendarPopover: NSPopover?
   private let backButton = NSButton(title: "返回", target: nil, action: nil)
   private let openButton = NSButton(title: "查看下级…", target: nil, action: nil)
   private let renameButton = NSButton(title: "改名…", target: nil, action: nil)
@@ -20,7 +35,7 @@ final class MVHistoryWindowController: NSWindowController {
 
   private init() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 680, height: 440),
+      contentRect: NSRect(x: 0, y: 0, width: 680, height: 480),
       styleMask: [.titled, .closable, .resizable, .miniaturizable],
       backing: .buffered,
       defer: false
@@ -28,7 +43,7 @@ final class MVHistoryWindowController: NSWindowController {
     window.title = "历史记录"
     // 关掉还能再开
     window.isReleasedWhenClosed = false
-    window.minSize = NSSize(width: 560, height: 300)
+    window.minSize = NSSize(width: 560, height: 360)
     super.init(window: window)
     window.delegate = self
     self.buildContent()
@@ -40,6 +55,11 @@ final class MVHistoryWindowController: NSWindowController {
 
   func show() {
     self.path = []
+    // 沿用上次关掉时的区间；排序每次从「最新在上」开始
+    self.filter = MVHistoryFilterStore.load()
+    self.sort = MVHistorySort()
+    self.updateRangeControls()
+    self.updateSortIndicators()
     self.reload()
     self.window?.center()
     self.showWindow(nil)
@@ -52,24 +72,28 @@ final class MVHistoryWindowController: NSWindowController {
   private func buildContent() {
     guard let content = self.window?.contentView else { return }
 
-    self.pathLabel.frame = NSRect(x: 14, y: 404, width: 380, height: 18)
+    self.pathLabel.frame = NSRect(x: 14, y: 446, width: 300, height: 18)
     self.pathLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
     self.pathLabel.lineBreakMode = .byTruncatingMiddle
     self.pathLabel.autoresizingMask = [.width, .minYMargin]
     content.addSubview(self.pathLabel)
 
+    self.buildFilterBar(in: content)
+
+    // 列的 identifier 与排序键同名，点列头就能对上
     for (identifier, title, width) in [
       ("name", "名字", 150),
       ("title", "时钟", 90),
-      ("start", "起始时间", 120),
+      ("startDate", "起始时间", 120),
       ("duration", "时长", 90),
-      ("end", "结束时间", 140)
+      ("endDate", "结束时间", 140)
     ] {
       let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(identifier))
       column.title = title
       column.width = CGFloat(width)
       column.minWidth = 70
       column.resizingMask = .userResizingMask
+      column.sortDescriptorPrototype = NSSortDescriptor(key: identifier, ascending: true)
       self.tableView.addTableColumn(column)
     }
 
@@ -80,7 +104,7 @@ final class MVHistoryWindowController: NSWindowController {
     self.tableView.doubleAction = #selector(self.openSelected)
     self.tableView.target = self
 
-    let scrollView = NSScrollView(frame: NSRect(x: 12, y: 46, width: 656, height: 350))
+    let scrollView = NSScrollView(frame: NSRect(x: 12, y: 46, width: 656, height: 360))
     scrollView.borderType = .bezelBorder
     scrollView.hasVerticalScroller = true
     scrollView.autoresizingMask = [.width, .height]
@@ -92,7 +116,12 @@ final class MVHistoryWindowController: NSWindowController {
     self.hintLabel.autoresizingMask = [.maxXMargin, .maxYMargin]
     content.addSubview(self.hintLabel)
 
-    // 从右往左排：删除 / 改名 / 查看下级 / 返回
+    self.buildActionButtons(in: content)
+    self.updateSortIndicators()
+  }
+
+  /// 底部一排按钮，从右往左：删除 / 改名 / 查看下级 / 返回
+  private func buildActionButtons(in content: NSView) {
     var buttonX: CGFloat = 568
     for button in [self.deleteButton, self.renameButton, self.openButton, self.backButton] {
       button.bezelStyle = .rounded
@@ -110,13 +139,19 @@ final class MVHistoryWindowController: NSWindowController {
 
   // MARK: - 当前层级
 
-  private var currentRecords: [ClockRecord] {
-    MVHistoryTracker.shared.records.records(at: self.path)
+  /// 真正显示出来的记录：根层先按日期区间筛，再按当前排序排好
+  private var displayedRecords: [ClockRecord] {
+    let level = MVHistoryTracker.shared.records.records(at: self.path)
+    // 筛选只认最外层：点进某条之后，它下面的子时钟记录整段都在
+    let visible = self.path.isEmpty
+      ? level.filter { self.filter?.contains($0.startDate) ?? true }
+      : level
+    return visible.sorted(by: self.sort)
   }
 
   private var selectedRecord: ClockRecord? {
     let row = self.tableView.selectedRow
-    let records = self.currentRecords
+    let records = self.displayedRecords
     return records.indices.contains(row) ? records[row] : nil
   }
 
@@ -136,13 +171,13 @@ final class MVHistoryWindowController: NSWindowController {
     let selectedID = self.selectedRecord?.id
     self.tableView.reloadData()
 
-    if let selectedID, let row = self.currentRecords.firstIndex(where: { $0.id == selectedID }) {
+    if let selectedID, let row = self.displayedRecords.firstIndex(where: { $0.id == selectedID }) {
       self.tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
     }
     self.updateControls()
   }
 
-  private func reload() {
+  func reload() {
     self.tableView.reloadData()
     self.updateControls()
   }
@@ -156,8 +191,16 @@ final class MVHistoryWindowController: NSWindowController {
     self.renameButton.isEnabled = record != nil
     self.deleteButton.isEnabled = record != nil
 
-    self.hintLabel.stringValue = self.currentRecords.isEmpty
-      ? "还没有记录：一点开始计时就有"
+    let records = self.displayedRecords
+    self.statsLabel.stringValue = self.statsText(for: records)
+
+    // 进了下级之后筛选控件就用不上了（筛选只认最外层记录），关掉免得点了个空
+    let filtering = self.path.isEmpty
+    self.rangeButton.isEnabled = filtering
+    self.presetControl.isEnabled = filtering
+
+    self.hintLabel.stringValue = records.isEmpty
+      ? (filtering && self.filter != nil ? "这段时间没有记录" : "还没有记录：一点开始计时就有")
       : "双击一行可以看下级记录"
   }
 
@@ -240,11 +283,11 @@ extension MVHistoryWindowController: NSWindowDelegate {
 
 extension MVHistoryWindowController: NSTableViewDataSource, NSTableViewDelegate {
   func numberOfRows(in _: NSTableView) -> Int {
-    self.currentRecords.count
+    self.displayedRecords.count
   }
 
   func tableView(_: NSTableView, objectValueFor column: NSTableColumn?, row: Int) -> Any? {
-    let records = self.currentRecords
+    let records = self.displayedRecords
     guard records.indices.contains(row) else { return nil }
     let record = records[row]
 
@@ -255,13 +298,13 @@ extension MVHistoryWindowController: NSTableViewDataSource, NSTableViewDelegate 
     case "title":
       return record.title.isEmpty ? "—" : record.title
 
-    case "start":
+    case "startDate":
       return record.startDateDisplay
 
     case "duration":
       return record.durationDisplay
 
-    case "end":
+    case "endDate":
       return record.endDateDisplay
 
     default:

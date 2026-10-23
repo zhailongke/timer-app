@@ -48,6 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Minimize button next to the close button at the top left, so a clock can be tucked into the Dock and brought back
 - A pin button next to the pause button at the top right (same size, blue filled pin when pinned, slashed pin when not) toggles 窗口置顶 for every window; it is on by default, so windows still float above others (and follow you to every Space) until you unpin them, and the 窗口 ▸ 窗口置顶 menu item stays in sync
 - Each clock keeps its own mode: switching a child clock (Tab / S / right-click 倒计时模式 / 秒表模式) no longer switches or resets its parent or any other window; a window floats above others when that window itself is in stopwatch mode, and new windows open in the mode used last
+- History can be filtered by date: the range button in the top bar opens a calendar where one click picks the start day and a second one picks the end day (a single day works too), with 今天 / 昨天 / 近 7 天 / 近 30 天 / 全部 presets; top-level records are matched by their start time, the chosen range is remembered between launches, and drilling into a record still shows all of its child records
+- History rows are sorted with the newest first; clicking a column header (名字 / 时钟 / 起始时间 / 时长 / 结束时间) sorts by that column and clicking it again flips the direction, with the sort indicator following along
+- The history window shows a 共 N 条 · 合计 … summary for the level being viewed, which grows live while a clock is running
 
 ## [2.1.0] - 2026-02-07
 
