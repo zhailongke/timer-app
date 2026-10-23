@@ -89,8 +89,8 @@ final class MVClockView: NSView {
   /// 名字右边的改名按钮（蓝色圆点 + 铅笔）：点它进入改名；只有能改名的子时钟才显示
   let renameButton = MVRenameButton(frame: NSRect(x: 111, y: 1, width: 14, height: 14))
 
-  /// 左下角的置顶按钮：和改名按钮对称，管这个窗口浮不浮在其他窗口之上
-  let pinButton = MVPinButton(frame: NSRect(x: 8, y: 1, width: 14, height: 14))
+  /// 左上角的置顶按钮：在关闭 / 最小化按钮下面，左边缘对齐，管这个窗口浮不浮在其他窗口之上
+  let pinButton = MVPinButton(frame: NSRect(x: 7, y: 100, width: 20, height: 20))
 
   /// 按钮小，点击区域往外扩一圈，好点
   var renameHitFrame: NSRect {

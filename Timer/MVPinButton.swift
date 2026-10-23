@@ -1,9 +1,9 @@
 import AppKit
 
-/// 左下角的置顶按钮：圆点 + 图钉，跟右上角的起停按钮同一套样式。
-/// 亮蓝实心 = 这个窗口浮在其他窗口之上；半透明白 = 普通窗口，会被别的窗口盖住
+/// 左上角的置顶按钮：圆点 + 图钉，跟右上角的起停按钮同一套样式。
+/// 置顶：亮蓝实心 + 完整图钉；不置顶：半透明白 + 划掉的图钉，一眼能分清
 final class MVPinButton: NSView {
-  /// 是否置顶：跟着换底色和符号（实心图钉 / 空心图钉）
+  /// 是否置顶：跟着换底色和符号（完整图钉 / 划掉的图钉）
   var isPinned = true {
     didSet {
       self.updateSymbol()
@@ -53,12 +53,14 @@ final class MVPinButton: NSView {
   }
 
   private func updateSymbol() {
+    // 两个状态用两个不同的符号：实心图钉 = 钉住了，划掉的图钉 = 没钉
     let symbol = NSImage(
-      systemSymbolName: self.isPinned ? "pin.fill" : "pin",
+      systemSymbolName: self.isPinned ? "pin.fill" : "pin.slash",
       accessibilityDescription: "置顶"
     )
     symbol?.isTemplate = true
     self.symbolView.image = symbol
+    self.toolTip = self.isPinned ? "已置顶，点击取消" : "未置顶，点击置顶"
   }
 
   override func draw(_: NSRect) {
