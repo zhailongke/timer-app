@@ -55,8 +55,8 @@ final class MVHistoryWindowController: NSWindowController {
 
   func show() {
     self.path = []
-    // 沿用上次关掉时的区间；排序每次从「最新在上」开始
-    self.filter = MVHistoryFilterStore.load()
+    // 沿用上次关掉时选的区间，第一次打开默认是今天；排序每次从「最新在上」开始
+    self.filter = MVHistoryFilterStore.load().range
     self.sort = MVHistorySort()
     self.updateRangeControls()
     self.updateSortIndicators()

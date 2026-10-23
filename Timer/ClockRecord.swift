@@ -54,10 +54,27 @@ struct ClockRecord: Codable, Equatable, Identifiable, Sendable {
   }
 
   static func defaultName(for date: Date) -> String {
-    date.formatted(.dateTime.month().day().hour().minute())
+    "\(Self.monthDayFormatter.string(from: date)) \(Self.timeFormatter.string(from: date))"
   }
 
   // MARK: - 列表显示
+
+  /// 月日固定写中文（10月23日），不跟系统语言走，免得中文界面里冒出 Oct 之类的英文月份。
+  /// 格式写死而不是用 Md 模板：zh_CN 的模板给出来的是 M/d，不是中文
+  private static let monthDayFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "zh_CN")
+    formatter.dateFormat = "M月d日"
+    return formatter
+  }()
+
+  /// 时分仍然跟系统的 12/24 小时制走：jj 模板会按系统设置给出 h:mm a 或 HH:mm
+  private static let timeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.locale = Locale.current
+    formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "jj:mm", options: 0, locale: Locale.current)
+    return formatter
+  }()
 
   var startDateDisplay: String { Self.defaultName(for: self.startDate) }
 

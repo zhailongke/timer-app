@@ -85,19 +85,50 @@ struct MVHistoryDateFilter: Codable, Equatable, Sendable {
   }
 }
 
-/// 筛选区间存在 UserDefaults 里：关掉历史窗口再打开还是上次那个区间；存 nil 就是「全部记录」
+/// 存下来的筛选偏好：`range` 为 nil 表示用户选了「全部记录」，
+/// 整个偏好不存在（第一次打开）时取 `default`
+struct MVHistoryFilterPreference: Codable, Equatable, Sendable {
+  var range: MVHistoryDateFilter?
+
+  private enum CodingKeys: String, CodingKey {
+    case range
+  }
+
+  init(range: MVHistoryDateFilter?) {
+    self.range = range
+  }
+
+  init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.range = try container.decodeIfPresent(MVHistoryDateFilter.self, forKey: .range)
+  }
+
+  /// 没有区间也要把 range 写成 null：省略的话，「全部记录」和「从没存过」在存档里就分不开了
+  func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(self.range, forKey: .range)
+  }
+
+  /// 第一次打开只看今天，免得一进来先看到一堆旧记录
+  static let `default` = Self(range: .today())
+}
+
+/// 筛选区间存在 UserDefaults 里：关掉历史窗口再打开还是上次那个区间（含「全部记录」）
 enum MVHistoryFilterStore {
-  static func load(from defaults: UserDefaults = .standard) -> MVHistoryDateFilter? {
-    guard let data = defaults.data(forKey: MVUserDefaultsKeys.historyDateFilter) else { return nil }
-    return try? JSONDecoder().decode(MVHistoryDateFilter.self, from: data)
+  static func load(from defaults: UserDefaults = .standard) -> MVHistoryFilterPreference {
+    guard let data = defaults.data(forKey: MVUserDefaultsKeys.historyDateFilter),
+      let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      // 更早的版本直接存的是区间本身，没有 range 这一层：那种数据当没存过，回到默认区间
+      payload.keys.contains("range"),
+      let preference = try? JSONDecoder().decode(MVHistoryFilterPreference.self, from: data)
+    else { return .default }
+
+    return preference
   }
 
   static func save(_ filter: MVHistoryDateFilter?, to defaults: UserDefaults = .standard) {
-    guard let filter else {
-      defaults.removeObject(forKey: MVUserDefaultsKeys.historyDateFilter)
-      return
-    }
-    guard let data = try? JSONEncoder().encode(filter) else { return }
+    let preference = MVHistoryFilterPreference(range: filter)
+    guard let data = try? JSONEncoder().encode(preference) else { return }
     defaults.set(data, forKey: MVUserDefaultsKeys.historyDateFilter)
   }
 }

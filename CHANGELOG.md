@@ -51,6 +51,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - History can be filtered by date: the range button in the top bar opens a calendar where one click picks the start day and a second one picks the end day (a single day works too), with 今天 / 昨天 / 近 7 天 / 近 30 天 / 全部 presets; top-level records are matched by their start time, the chosen range is remembered between launches, and drilling into a record still shows all of its child records
 - History rows are sorted with the newest first; clicking a column header (名字 / 时钟 / 起始时间 / 时长 / 结束时间) sorts by that column and clicking it again flips the direction, with the sort indicator following along
 - The history window shows a 共 N 条 · 合计 … summary for the level being viewed, which grows live while a clock is running
+- The history window opens on today's records instead of the whole log; a range picked by hand (including 全部) is still remembered for the next launch
+- History dates are always written in Chinese (e.g. 10月23日 21:30) instead of following the system language, so an English system no longer shows `Oct 23`
 
 ## [2.1.0] - 2026-02-07
 
