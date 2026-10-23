@@ -86,6 +86,49 @@ final class TimerWindowSnappingTests: XCTestCase {
 
     XCTAssertNil(snapTarget(dragged, among: [other]))
   }
+
+  /// 不用描得很准：横着隔多远都行，只要底边大致对上就自动吸齐
+  func testAlignsWhenRoughlyInLine() {
+    let other = NSRect(x: 200, y: 300, width: 150, height: 150)
+    let dragged = NSRect(x: 800, y: 305, width: 150, height: 150)
+
+    XCTAssertEqual(snapTarget(dragged, among: [other]), NSPoint(x: 800, y: 300))
+  }
+
+  /// 两个轴都大致对上就一起吸（左边的窗口给竖线，下面的窗口给横线）
+  func testAlignsOnBothAxes() {
+    let left = NSRect(x: 200, y: 300, width: 150, height: 150)
+    let below = NSRect(x: 700, y: 100, width: 150, height: 150)
+    let dragged = NSRect(x: 206, y: 106, width: 150, height: 150)
+
+    XCTAssertEqual(snapTarget(dragged, among: [left, below]), NSPoint(x: 200, y: 100))
+  }
+
+  /// 够得着就贴上去，而不是只把边对齐
+  func testPrefersAttachingOverAligning() {
+    let other = NSRect(x: 200, y: 300, width: 150, height: 150)
+    let dragged = NSRect(x: 356, y: 306, width: 150, height: 150)
+
+    XCTAssertEqual(snapTarget(dragged, among: [other]), NSPoint(x: 350, y: 300))
+  }
+
+  /// 差得太多就别管（对齐也讲阈值）
+  func testIgnoresAlignmentBeyondThreshold() {
+    let other = NSRect(x: 200, y: 300, width: 150, height: 150)
+    let dragged = NSRect(x: 800, y: 320, width: 150, height: 150)
+
+    XCTAssertNil(snapTarget(dragged, among: [other]))
+  }
+
+  /// 吸过去会压住别的窗口的对齐不要
+  func testSkipsAlignmentThatWouldCoverAnotherWindow() {
+    // other 的横线在 341，离 dragged 差 14（够得着），但吸过去会压到 occupied（顶边到 350）
+    let other = NSRect(x: 200, y: 341, width: 150, height: 150)
+    let occupied = NSRect(x: 830, y: 200, width: 150, height: 150)
+    let dragged = NSRect(x: 805, y: 355, width: 150, height: 150)
+
+    XCTAssertNil(snapTarget(dragged, among: [other, occupied]))
+  }
 }
 
 // MARK: - 真窗口接线
@@ -127,6 +170,19 @@ extension TimerWindowSnappingTests {
     // 松手后就散得开：再挪远一点不该被拽回去
     secondWindow.setFrameOrigin(NSPoint(x: firstWindow.frame.maxX + 80, y: firstWindow.frame.minY))
     XCTAssertEqual(secondWindow.frame.origin.x, firstWindow.frame.maxX + 80, accuracy: 0.5)
+
+    // 离得远也能排齐：横着隔开没关系，边大致对上就自动吸过去
+    secondWindow.beginUserDrag()
+    secondWindow.setFrameOrigin(NSPoint(x: firstWindow.frame.maxX + 40, y: firstWindow.frame.minY + 6))
+    secondWindow.endUserDrag()
+
+    XCTAssertEqual(secondWindow.frame.origin.y, firstWindow.frame.minY, accuracy: 0.5, "边要自动对齐")
+    XCTAssertEqual(
+      secondWindow.frame.origin.x,
+      firstWindow.frame.maxX + 40,
+      accuracy: 0.5,
+      "只对齐，不把窗口横向拽过去"
+    )
   }
 
   /// 在屏幕上找一块不与任何已有窗口相交的空地

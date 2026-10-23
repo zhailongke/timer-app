@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Templates can record a child clock's descendants: tick 记录下级子时钟 in the save panel to edit and store the whole chain; creating from the template rebuilds every level
 - Closing the last window quits the app, so reopening starts from a single clean clock
 - Window snapping: dragging a clock window near another one snaps them together edge to edge (no gap, aligned, never overlapping), and dragging more than 16pt away breaks them apart; positions that would cover another clock or push the window off screen are skipped
+- Roughly in line is enough: when two windows are too far apart to attach, an edge or centre line that is within 16pt is still snapped to on its own axis, so a row of clocks lines up without careful aiming while the other axis stays where the mouse put it
 - Stopwatch shows elapsed time as 时:分:秒 (`1:05:30`), with the font auto-shrinking to fit; dock badge and VoiceOver include hours past 1h
 - Chinese UI: main menu, context menu and VoiceOver descriptions are now in Chinese
 - Switching between countdown and stopwatch resets the clock
