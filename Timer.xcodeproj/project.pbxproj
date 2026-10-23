@@ -64,6 +64,8 @@
 		CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000017CCCC001700000000 /* TimerChildClockTests.swift */; };
 		CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */; };
 		CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */; };
+		AA000040AAAA004000000001 /* MVWindowSnapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000040AAAA004000000000 /* MVWindowSnapper.swift */; };
+		AA000041AAAA004100000001 /* TimerWindowSnappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,6 +147,8 @@
 		CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWindowControlsTests.swift; sourceTree = "<group>"; };
 		DD000001DDDD000100000000 /* TimerScriptCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerScriptCommand.swift; sourceTree = "<group>"; };
 		DD000002DDDD000200000000 /* Timer.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Timer.sdef; sourceTree = "<group>"; };
+		AA000040AAAA004000000000 /* MVWindowSnapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MVWindowSnapper.swift; sourceTree = "<group>"; };
+		AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWindowSnappingTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -198,6 +202,7 @@
 				4C30BBFB1CA7C56500C45EBF /* AppDelegate.swift */,
 				4C6F0F2B1CACF4B500E9A6F7 /* MVTimerController.swift */,
 				4C30BC081CA7C81C00C45EBF /* MVWindow.swift */,
+				AA000040AAAA004000000000 /* MVWindowSnapper.swift */,
 				4C30BC0A1CA7C96700C45EBF /* MVMainView.swift */,
 				4C30BC151CA7D94500C45EBF /* MVClockView.swift */,
 				CC000001CCCC000100000000 /* MVClockView+Behavior.swift */,
@@ -255,6 +260,7 @@
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */,
 				CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */,
+				AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */,
 			);
 			path = TimerTests;
 			sourceTree = "<group>";
@@ -414,6 +420,7 @@
 				4C6F0F211CAA3D8600E9A6F7 /* MVLabel.swift in Sources */,
 				4C6F0F2C1CACF4B500E9A6F7 /* MVTimerController.swift in Sources */,
 				4C30BC091CA7C81C00C45EBF /* MVWindow.swift in Sources */,
+				AA000040AAAA004000000001 /* MVWindowSnapper.swift in Sources */,
 				4C30BBFC1CA7C56500C45EBF /* AppDelegate.swift in Sources */,
 				4C30BC161CA7D94500C45EBF /* MVClockView.swift in Sources */,
 				AA000001AAAA000100000001 /* TimerLogic.swift in Sources */,
@@ -461,6 +468,7 @@
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */,
 				CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */,
+				AA000041AAAA004100000001 /* TimerWindowSnappingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

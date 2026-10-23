@@ -44,6 +44,57 @@ final class MVWindow: NSWindow {
       frame.origin.y -= 2
       button.frame = frame
     }
+
+    // 拖动中每动一下就看一眼能不能跟旁边的时钟拼上
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(self.handleWindowMove),
+      name: NSWindow.didMoveNotification,
+      object: self
+    )
+  }
+
+  /// 用户正拖着这个窗口；只有这时候才吸附，代码挪窗口（比如新建子时钟）不参与
+  private var isUserDragging = false
+  /// 吸附自己挪出来的 didMove 不该再算一次（吸附位置是幂等的，但少绕一圈更稳）
+  private var isApplyingSnap = false
+
+  /// 拖拽开始前调用（MVClockView 接管拖动前）
+  func beginUserDrag() {
+    self.isUserDragging = true
+  }
+
+  /// 松手后调用；窗口就停在最后拼好的位置上
+  func endUserDrag() {
+    self.isUserDragging = false
+  }
+
+  @objc private func handleWindowMove() {
+    guard self.isUserDragging, !self.isApplyingSnap else { return }
+
+    let others = Self.otherTimerWindowFrames(excluding: self)
+    guard let origin = MVWindowSnapper.snapTarget(
+      for: self.frame,
+      among: others,
+      visibleFrame: self.screen?.visibleFrame
+    ) else { return }
+    guard abs(origin.x - self.frame.origin.x) > 0.5 || abs(origin.y - self.frame.origin.y) > 0.5 else { return }
+
+    self.isApplyingSnap = true
+    self.setFrameOrigin(origin)
+    self.isApplyingSnap = false
+  }
+
+  /// 可以拼接的其它时钟窗口位置；历史记录窗口之类的不算
+  private static func otherTimerWindowFrames(excluding window: NSWindow) -> [NSRect] {
+    NSApplication.shared.windows.compactMap { candidate in
+      guard candidate !== window,
+            candidate.isVisible,
+            !candidate.isMiniaturized,
+            candidate.windowController is MVTimerController
+      else { return nil }
+      return candidate.frame
+    }
   }
 
   /// Tab 默认被窗口拿去做焦点切换，这里提前截获，交给 controller 切换模式；

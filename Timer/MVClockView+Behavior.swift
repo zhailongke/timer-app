@@ -25,8 +25,12 @@ extension MVClockView {
     guard !self.didDrag else { return }
     self.didDrag = true
     self.updateClockFaceView()
-    // 内容视图铺满整个窗口后没有标题栏可拖，这里自己接管拖动
+    // 内容视图铺满整个窗口后没有标题栏可拖，这里自己接管拖动；
+    // performDrag 会一直转到松手才返回，正好用它框出「用户在拖」这段时间
+    let window = self.window as? MVWindow
+    window?.beginUserDrag()
     self.window?.performDrag(with: event)
+    window?.endUserDrag()
   }
 
   override func scrollWheel(with event: NSEvent) {
