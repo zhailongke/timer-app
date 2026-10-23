@@ -89,8 +89,8 @@ final class MVClockView: NSView {
   /// 名字右边的改名按钮（蓝色圆点 + 铅笔）：点它进入改名；只有能改名的子时钟才显示
   let renameButton = MVRenameButton(frame: NSRect(x: 111, y: 1, width: 14, height: 14))
 
-  /// 左上角的置顶按钮：在关闭 / 最小化按钮下面，左边缘对齐，管这个窗口浮不浮在其他窗口之上
-  let pinButton = MVPinButton(frame: NSRect(x: 7, y: 100, width: 20, height: 20))
+  /// 右上角的置顶按钮：紧挨着暂停 / 继续按钮左边，同样大小，管这个窗口浮不浮在其他窗口之上
+  let pinButton = MVPinButton(frame: NSRect(x: 92, y: 120, width: 22, height: 22))
 
   /// 按钮小，点击区域往外扩一圈，好点
   var renameHitFrame: NSRect {
@@ -236,8 +236,8 @@ final class MVClockView: NSView {
     self.addSubview(self.startTimeLabel)
     self.addSubview(self.titleLabel)
     self.addSubview(self.renameButton)
-    self.addSubview(self.pinButton)
     self.addSubview(self.controlButton)
+    self.addSubview(self.pinButton)
     self.addSubview(self.titleInputField)
 
     self.titleInputField.delegate = self
@@ -367,12 +367,9 @@ extension MVClockView {
     if view == self.titleInputField {
       return view
     }
-    // 改名按钮（含里面的铅笔图标）自己接点击
-    if view?.isDescendant(of: self.renameButton) == true {
-      return view
-    }
-    // 控制按钮自己接点击，不再当作点时钟表面
-    if view == self.controlButton {
+    // 这几个按钮（含按钮里的图标）自己接点击，不再当作点时钟表面
+    for button in [self.renameButton, self.controlButton, self.pinButton]
+    where view?.isDescendant(of: button) == true {
       return view
     }
     if view != nil {
