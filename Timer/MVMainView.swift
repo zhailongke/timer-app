@@ -44,6 +44,13 @@ final class MVMainView: NSView {
     keyEquivalent: ""
   )
 
+  /// 打开关键日子窗口：加 / 改 / 删要在表盘上倒计时的日子
+  private let keyDatesMenuItem = NSMenuItem(
+    title: "关键日子…",
+    action: #selector(AppDelegate.showKeyDates(_:)),
+    keyEquivalent: ""
+  )
+
   /// 子时钟：新建、按模板新建、把当前子时钟存成模板
   private let childMenuItem = NSMenuItem(title: "子时钟", action: nil, keyEquivalent: "")
 
@@ -110,10 +117,12 @@ final class MVMainView: NSView {
 
     self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
     self.historyMenuItem.target = NSApplication.shared.delegate
+    self.keyDatesMenuItem.target = NSApplication.shared.delegate
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)
     self.contextMenu.addItem(self.historyMenuItem)
+    self.contextMenu.addItem(self.keyDatesMenuItem)
     if let menuItem = self.menuItem {
       self.contextMenu.addItem(menuItem)
     }

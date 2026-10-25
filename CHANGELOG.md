@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - New history feature: every clock session is recorded (start time, duration, end time), named after its start time; closing a clock ends one record
 - History records are created the moment a clock starts (not only when they are closed): the duration grows live, child clocks attach under their parent's record right away, and missing ancestor records are created automatically so a running child always has somewhere to hang
 - History no longer disappears on close: records live in one persisted tree from start to finish, are flushed to disk on quit, and the open history window refreshes itself every second
+- Key dates: right-click 关键日子… to keep a list of named dates (e.g. 考研 12 月 19 日); the clock face shows how many days are left, up to three at a time, soonest first, and dates that have passed drop off by themselves
+- The big time and the stopwatch block are smaller than before, and the clock face is laid out tighter, to leave room for the countdown under the time
 - 历史记录… opens a window instead of a menu list: root level is one row per main clock session, click into a row to drill down through its child clock records, with rename and delete: 子时钟 ▸ 管理模板… opens a window listing every template with 修改… (name / mode / duration / auto-start, plus child names) and 删除 (with confirmation)
 - The rename input field starts short and grows with the typed name instead of always spanning the full width
 - Pressing enter to confirm a rename no longer leaks its key-up to the clock and toggles start/stop: the attributed string used for the underline now carries the centered paragraph style (without it, `attributedStringValue` overrides the label's `alignment`)

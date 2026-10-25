@@ -96,3 +96,12 @@ Every clock session is recorded with its **start time, duration and end time**, 
 - A clock that never actually ran (under 1 second) and has no child records leaves nothing behind
 - Records live in `UserDefaults`; the most recent 200 main clock records are kept: select one and press 修改… (or double-click) to change its name, mode (countdown / stopwatch), duration and "start immediately"; press 删除 to remove it. Edits are stored by id, so renaming never leaves a stale copy behind.
 - Templates are stored in `UserDefaults`, so they survive a restart. Saving under an existing name replaces that template.
+
+### Key dates
+
+Mark the dates that matter (for example `考研 · 12 月 19 日`) and the clock face counts the days down to them.
+
+- Right-click **关键日子…** to open a window where dates can be added, changed and removed
+- Up to three upcoming dates show at once, soonest first: **the nearest date sits on top**
+- A date that is today reads 今天; dates that have passed drop off by themselves
+- Dates live in `UserDefaults`, so they survive a restart

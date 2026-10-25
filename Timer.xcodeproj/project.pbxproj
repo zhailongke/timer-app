@@ -71,6 +71,13 @@
 		CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */; };
 		AA000040AAAA004000000001 /* MVWindowSnapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000040AAAA004000000000 /* MVWindowSnapper.swift */; };
 		AA000041AAAA004100000001 /* TimerWindowSnappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */; };
+		CC0001A1CCCC01A100000001 /* KeyDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000000 /* KeyDate.swift */; };
+		CC0001A1CCCC01A100000003 /* MVKeyDateEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000002 /* MVKeyDateEditor.swift */; };
+		CC0001A1CCCC01A100000005 /* MVKeyDateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000004 /* MVKeyDateManager.swift */; };
+		CC0001A1CCCC01A100000007 /* MVClockView+Countdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000006 /* MVClockView+Countdown.swift */; };
+		CC0001A1CCCC01A100000009 /* AppDelegate+KeyDates.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000008 /* AppDelegate+KeyDates.swift */; };
+		CC0001A1CCCC01A100000101 /* TimerKeyDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000100 /* TimerKeyDateTests.swift */; };
+		CC0001A1CCCC01A100000103 /* MVClockView+Update.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0001A1CCCC01A100000102 /* MVClockView+Update.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -159,6 +166,13 @@
 		DD000002DDDD000200000000 /* Timer.sdef */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Timer.sdef; sourceTree = "<group>"; };
 		AA000040AAAA004000000000 /* MVWindowSnapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MVWindowSnapper.swift; sourceTree = "<group>"; };
 		AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWindowSnappingTests.swift; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000000 /* KeyDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyDate.swift"; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000002 /* MVKeyDateEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVKeyDateEditor.swift"; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000004 /* MVKeyDateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVKeyDateManager.swift"; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000006 /* MVClockView+Countdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Countdown.swift"; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000008 /* AppDelegate+KeyDates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+KeyDates.swift"; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000100 /* TimerKeyDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerKeyDateTests.swift; sourceTree = "<group>"; };
+		CC0001A1CCCC01A100000102 /* MVClockView+Update.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MVClockView+Update.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -239,6 +253,12 @@
 				CC000001CCCC002000000006 /* MVHistoryDateFilter.swift */,
 				CC000001CCCC002000000007 /* MVHistorySort.swift */,
 				CC000001CCCC002000000008 /* MVCalendarView.swift */,
+				CC0001A1CCCC01A100000000 /* KeyDate.swift */,
+				CC0001A1CCCC01A100000002 /* MVKeyDateEditor.swift */,
+				CC0001A1CCCC01A100000004 /* MVKeyDateManager.swift */,
+				CC0001A1CCCC01A100000006 /* MVClockView+Countdown.swift */,
+				CC0001A1CCCC01A100000008 /* AppDelegate+KeyDates.swift */,
+				CC0001A1CCCC01A100000102 /* MVClockView+Update.swift */,
 				CC000001CCCC002000000009 /* MVHistoryWindowController+Filter.swift */,
 				AA000010AAAA001000000000 /* MVClockProgressView.swift */,
 				AA000011AAAA001100000000 /* MVClockArrowView.swift */,
@@ -273,6 +293,7 @@
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */,
+				CC0001A1CCCC01A100000100 /* TimerKeyDateTests.swift */,
 				CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */,
 				CC000016CCCC001A00000000 /* TimerHistoryFilterTests.swift */,
 				AA000041AAAA004100000000 /* TimerWindowSnappingTests.swift */,
@@ -466,6 +487,12 @@
 				CC000001CCCC002100000006 /* MVHistoryDateFilter.swift in Sources */,
 				CC000001CCCC002100000007 /* MVHistorySort.swift in Sources */,
 				CC000001CCCC002100000008 /* MVCalendarView.swift in Sources */,
+				CC0001A1CCCC01A100000001 /* KeyDate.swift in Sources */,
+				CC0001A1CCCC01A100000003 /* MVKeyDateEditor.swift in Sources */,
+				CC0001A1CCCC01A100000005 /* MVKeyDateManager.swift in Sources */,
+				CC0001A1CCCC01A100000007 /* MVClockView+Countdown.swift in Sources */,
+				CC0001A1CCCC01A100000009 /* AppDelegate+KeyDates.swift in Sources */,
+				CC0001A1CCCC01A100000103 /* MVClockView+Update.swift in Sources */,
 				CC000001CCCC002100000009 /* MVHistoryWindowController+Filter.swift in Sources */,
 				DD000001DDDD000100000001 /* TimerScriptCommand.swift in Sources */,
 				AA000030AAAA003000000001 /* MVResource.swift in Sources */,
@@ -486,6 +513,7 @@
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */,
+				CC0001A1CCCC01A100000101 /* TimerKeyDateTests.swift in Sources */,
 				CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */,
 				CC000016CCCC001A00000001 /* TimerHistoryFilterTests.swift in Sources */,
 				AA000041AAAA004100000001 /* TimerWindowSnappingTests.swift in Sources */,

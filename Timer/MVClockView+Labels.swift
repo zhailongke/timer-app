@@ -4,6 +4,9 @@ import AppKit
 
 extension MVClockView {
   func updateLabels() {
+    // 每秒都会走到这里：同一天内倒计时不变，内部自己判断要不要重算
+    self.updateCountdownLabels()
+
     if self.mode == .stopwatch {
       self.updateStopwatchLabel()
       return
@@ -33,7 +36,11 @@ extension MVClockView {
   func updateStopwatchLabel() {
     let text = TimerLogic.stopwatchDisplayString(seconds: self.seconds)
     self.minutesLabel.string = text
-    self.minutesLabel.font = MVLabel.monospacedDigitFont(fitting: text, maxWidth: 120)
+    self.minutesLabel.font = MVLabel.monospacedDigitFont(
+      fitting: text,
+      maxWidth: 120,
+      maxSize: Self.stopwatchMaxFontSize
+    )
     self.secondsLabel.string = ""
 
     self.minutesLabel.sizeToFit()
@@ -62,7 +69,7 @@ extension MVClockView {
       timeString.range(of: " PM", options: [.caseInsensitive])
     ) {
       self.timerTimeLabel.setFont(
-        NSFont.systemFont(ofSize: 12, weight: .medium),
+        NSFont.systemFont(ofSize: 11, weight: .medium),
         range: NSRange(ampmRange, in: timeString)
       )
     }

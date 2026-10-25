@@ -7,14 +7,18 @@ final class MVClockView: NSView {
   static let designSize: CGFloat = 150
   /// 回车键码；改名提交后要靠它认出那个漏下来的 keyUp
   static let returnKeyCode: UInt16 = 36
-  static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 35, weight: .medium)
-  static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 15, weight: .regular)
+  /// 大号时间比早期版本小一号：底下要腾出地方放关键日子的倒计时
+  static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 27, weight: .medium)
+  static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
+  /// 秒表整块「时:分:秒」自适应字号的上限，跟着大号时间一起收
+  static let stopwatchMaxFontSize: CGFloat = 26
+  static let countdownFont = NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .medium)
 
   let progressView = MVClockProgressView()
   let arrowView = MVClockArrowView(center: CGPoint(x: 75, y: 75))
-  private let clockFaceView = MVClockFaceView(frame: NSRect(x: 16, y: 15, width: 118, height: 118))
+  let clockFaceView = MVClockFaceView(frame: NSRect(x: 16, y: 15, width: 118, height: 118))
 
-  private let pauseIconImageView: NSImageView = {
+  let pauseIconImageView: NSImageView = {
     let view = NSImageView(frame: NSRect(x: 70, y: 99, width: 10, height: 12))
     view.image = MVResource.image("icon-pause")
     view.alphaValue = 0.0
@@ -22,15 +26,15 @@ final class MVClockView: NSView {
   }()
 
   let timerTimeLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 94, width: 150, height: 20))
-    label.font = NSFont.systemFont(ofSize: 15, weight: .medium)
+    let label = MVLabel(frame: NSRect(x: 0, y: 100, width: 150, height: 16))
+    label.font = NSFont.systemFont(ofSize: 14, weight: .medium)
     label.alignment = .center
     label.textColor = MVResource.color("timerTime")
     return label
   }()
 
   let minutesLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 57, width: 150, height: 30))
+    let label = MVLabel(frame: NSRect(x: 0, y: 76, width: 150, height: 24))
     label.string = ""
     label.font = MVClockView.minutesFont
     label.alignment = .center
@@ -39,7 +43,7 @@ final class MVClockView: NSView {
   }()
 
   let secondsLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 38, width: 150, height: 20))
+    let label = MVLabel(frame: NSRect(x: 0, y: 56, width: 150, height: 16))
     label.font = MVClockView.secondsFont
     label.alignment = .center
     label.textColor = MVResource.color("seconds")
@@ -48,12 +52,16 @@ final class MVClockView: NSView {
 
   /// 秒表开始计时后，在大号时间下方显示起跑时刻
   let startTimeLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 37, width: 150, height: 18))
-    label.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+    let label = MVLabel(frame: NSRect(x: 0, y: 56, width: 150, height: 14))
+    label.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
     label.alignment = .center
     label.textColor = MVResource.color("seconds")
     return label
   }()
+
+  /// 关键日子倒计时：最多三条，按「还有几天」从小到大排，排在表盘下沿。
+  /// 越往下越靠近圆边，能用的宽度越小，所以每行的宽度按它所在的高度收窄
+  let countdownLabels: [MVLabel] = MVClockView.makeCountdownLabels()
 
   /// 子时钟的名字，例如「子时钟1」；主时钟为空。
   /// 放在圆框外（时钟圆的下沿 y=15 之下），不挡表盘上的数字
@@ -102,6 +110,9 @@ final class MVClockView: NSView {
   let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
+  /// 上次算倒计时是哪一天（0 点）；同一天内不用反复算
+  var countdownRefreshDay: Date?
+
   /// 顶部时钟用 jj:mm，秒表起始时刻用 jj:mm:ss，都跟随系统 12/24 小时制
   private static func formatter(template: String) -> DateFormatter {
     let formatter = DateFormatter()
@@ -234,6 +245,9 @@ final class MVClockView: NSView {
     self.addSubview(self.minutesLabel)
     self.addSubview(self.secondsLabel)
     self.addSubview(self.startTimeLabel)
+    for label in self.countdownLabels {
+      self.addSubview(label)
+    }
     self.addSubview(self.titleLabel)
     self.addSubview(self.renameButton)
     self.addSubview(self.controlButton)
@@ -259,6 +273,17 @@ final class MVClockView: NSView {
 
     guard let window = self.window else { return }
 
+    // 关键日子被增删改、或者过了午夜：时钟停着时没人每秒刷新，倒计时得自己重算
+    for name in [MVKeyDateStore.didChangeNotification, Notification.Name.NSCalendarDayChanged] {
+      self.notificationTasks.append(
+        Task { [weak self] in
+          for await _ in NotificationCenter.default.mvNotifications(named: name) {
+            self?.updateCountdownLabels(force: true)
+          }
+        }
+      )
+    }
+
     for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
       self.notificationTasks.append(
         Task { [weak self] in
@@ -278,103 +303,5 @@ final class MVClockView: NSView {
       self.timerTask?.cancel()
       self.currentTimeTask?.cancel()
     }
-  }
-}
-
-// MARK: - Layout & Updates
-
-extension MVClockView {
-  func updateClockFaceView(highlighted: Bool = false) {
-    self.clockFaceView.update(highlighted: highlighted)
-  }
-
-  func handleClick() {
-    if self.timerTask == nil {
-      // 秒表从 0 也能起跑；倒计时必须有时长才启动
-      guard self.mode == .stopwatch || self.seconds > 0 else { return }
-      self.updateTimerTime()
-      self.start()
-    } else {
-      if self.mode == .stopwatch {
-        self.stopwatchAccumulated = self.seconds
-        self.stopwatchStartDate = nil
-      }
-      self.paused = true
-      self.stop()
-    }
-    self.postAccessibilityValueChanged()
-  }
-
-  /// 切换模式，切换即重置
-  func setMode(_ newMode: TimerMode) {
-    guard newMode != self.mode else { return }
-
-    self.mode = newMode
-    self.paused = false
-    self.stop()
-    self.setCountdownSeconds(0)
-    self.stopwatchAccumulated = 0
-    self.stopwatchStartDate = nil
-    self.stopwatchOriginDate = nil
-    self.inputSeconds = false
-    self.updateTimerTime()
-    self.updateAllViews()
-    self.postAccessibilityValueChanged()
-  }
-
-  /// 右上角按钮跟着计时状态走：在跑显示「暂停」，停了显示「继续」
-  func updateControlButton() {
-    self.controlButton.isRunning = self.timerTask != nil
-  }
-
-  private func layoutPauseViews() {
-    self.updateControlButton()
-    let showPauseIcon = self.paused && self.timerTask != nil
-    NSAnimationContext.runAnimationGroup { ctx in
-      ctx.duration = 0.2
-      ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-      self.pauseIconImageView.animator().alphaValue = showPauseIcon ? 1 : 0
-      self.timerTimeLabel.animator().alphaValue = showPauseIcon ? 0 : 1
-    }
-  }
-
-  private func updateAllViews() {
-    self.updateLabels()
-    self.updateTimeLabel()
-    self.layoutSubviews()
-  }
-
-  func updateTimerTime() {
-    if self.mode == .stopwatch {
-      self.timerTime = Date()
-      return
-    }
-    self.timerTime = Date(timeIntervalSinceNow: Double(self.seconds))
-  }
-
-  /// 窗口缩放时 frame 会变，bounds 始终保持设计尺寸，内部子视图因此自动等比缩放
-  override func setFrameSize(_ newSize: NSSize) {
-    super.setFrameSize(newSize)
-    self.bounds.size = NSSize(width: Self.designSize, height: Self.designSize)
-  }
-
-  override func hitTest(_ aPoint: NSPoint) -> NSView? {
-    let view = super.hitTest(aPoint)
-    if view == self.arrowView {
-      return view
-    }
-    // 改名时把点击交给输入框，好在里面放光标
-    if view == self.titleInputField {
-      return view
-    }
-    // 这几个按钮（含按钮里的图标）自己接点击，不再当作点时钟表面
-    for button in [self.renameButton, self.controlButton, self.pinButton]
-    where view?.isDescendant(of: button) == true {
-      return view
-    }
-    if view != nil {
-      return self
-    }
-    return nil
   }
 }
