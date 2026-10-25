@@ -104,4 +104,4 @@ Mark the dates that matter (for example `考研 · 12 月 19 日`) and the clock
 - Right-click **关键日子…** to open a window where dates can be added, changed and removed
 - Up to three upcoming dates show at once, soonest first: **the nearest date sits on top**
 - A date that is today reads 今天; dates that have passed drop off by themselves
-- Dates live in `UserDefaults`, so they survive a restart. Tick 指定时刻 in the editor and pick an hour and minute to make the countdown exact: the clock face then counts down to the hour and minute (2天2时 / 5时20分) and shows the total hours left (50小时) on a line below, instead of counting whole days
+- Dates live in `UserDefaults`, so they survive a restart. Tick 指定时刻 in the editor and pick an hour and minute to make the countdown exact: the clock face then counts down to the hour and minute (2天2时 / 5时20分) and shows the total hours left (50小时) on a line below, instead of counting whole days. The key dates window has a 总小时数按一天 __ 小时算 field at the bottom: set it to 10 and 55 days counts as 550 hours instead of 1320, for estimating in terms of the hours you actually have per day

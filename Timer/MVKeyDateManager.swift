@@ -13,10 +13,12 @@ final class MVKeyDateManager: NSWindowController {
   private let editButton = NSButton(title: "修改…", target: nil, action: nil)
   private let deleteButton = NSButton(title: "删除", target: nil, action: nil)
   private let hintLabel = NSTextField(labelWithString: "")
+  /// 总小时数按一天多少小时折算：默认 24，改成别的表盘上的总小时数立刻跟着变
+  private let hoursPerDayField = NSTextField(frame: .zero)
 
   private init() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 460, height: 320),
+      contentRect: NSRect(x: 0, y: 0, width: 460, height: 348),
       styleMask: [.titled, .closable, .resizable, .miniaturizable],
       backing: .buffered,
       defer: false
@@ -24,7 +26,7 @@ final class MVKeyDateManager: NSWindowController {
     window.title = "关键日子"
     // 关掉后还能再开
     window.isReleasedWhenClosed = false
-    window.minSize = NSSize(width: 380, height: 220)
+    window.minSize = NSSize(width: 380, height: 260)
     super.init(window: window)
 
     self.buildContent()
@@ -46,6 +48,7 @@ final class MVKeyDateManager: NSWindowController {
 
     let scrollView = self.buildTable()
     content.addSubview(scrollView)
+    self.buildHoursPerDayRow(in: content)
     self.buildFooter(in: content)
   }
 
@@ -79,7 +82,7 @@ final class MVKeyDateManager: NSWindowController {
     self.tableView.doubleAction = #selector(self.editSelected)
     self.tableView.target = self
 
-    let scrollView = NSScrollView(frame: NSRect(x: 12, y: 46, width: 436, height: 262))
+    let scrollView = NSScrollView(frame: NSRect(x: 12, y: 74, width: 436, height: 262))
     scrollView.borderType = .bezelBorder
     scrollView.hasVerticalScroller = true
     scrollView.autoresizingMask = [.width, .height]
@@ -114,6 +117,46 @@ final class MVKeyDateManager: NSWindowController {
     self.deleteButton.frame = NSRect(x: 386, y: 8, width: 62, height: 28)
     self.deleteButton.autoresizingMask = [.minXMargin, .maxYMargin]
     content.addSubview(self.deleteButton)
+  }
+
+  /// 「总小时数按一天 [__] 小时算」：留空就按 24 小时
+  private func buildHoursPerDayRow(in content: NSView) {
+    let leadLabel = NSTextField(labelWithString: "总小时数按一天")
+    leadLabel.font = NSFont.systemFont(ofSize: 11)
+    leadLabel.textColor = .secondaryLabelColor
+    leadLabel.frame = NSRect(x: 14, y: 46, width: 82, height: 16)
+    leadLabel.autoresizingMask = [.maxXMargin, .minYMargin]
+    content.addSubview(leadLabel)
+
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .decimal
+    formatter.minimum = 1
+    formatter.maximum = 24
+    formatter.allowsFloats = true
+
+    self.hoursPerDayField.formatter = formatter
+    self.hoursPerDayField.isBezeled = true
+    self.hoursPerDayField.bezelStyle = .roundedBezel
+    self.hoursPerDayField.drawsBackground = true
+    self.hoursPerDayField.alignment = .center
+    self.hoursPerDayField.placeholderString = "24"
+    self.hoursPerDayField.target = self
+    self.hoursPerDayField.action = #selector(self.hoursPerDayChanged)
+    self.hoursPerDayField.frame = NSRect(x: 100, y: 44, width: 48, height: 20)
+    self.hoursPerDayField.autoresizingMask = [.maxXMargin, .minYMargin]
+    content.addSubview(self.hoursPerDayField)
+
+    let trailLabel = NSTextField(labelWithString: "小时算（1–24，留空按 24）")
+    trailLabel.font = NSFont.systemFont(ofSize: 11)
+    trailLabel.textColor = .secondaryLabelColor
+    trailLabel.frame = NSRect(x: 154, y: 46, width: 170, height: 16)
+    trailLabel.autoresizingMask = [.maxXMargin, .minYMargin]
+    content.addSubview(trailLabel)
+  }
+
+  @objc private func hoursPerDayChanged() {
+    let text = self.hoursPerDayField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    MVKeyDateSettings.save(hoursPerDay: Double(text))
   }
 
   @objc private func addKeyDate() {
@@ -164,6 +207,8 @@ final class MVKeyDateManager: NSWindowController {
   }
 
   private func reload(selecting row: Int? = nil) {
+    self.hoursPerDayField.doubleValue = MVKeyDateSettings.hoursPerDay()
+
     // 表里按日期先后排，跟表盘上「先显示最近那条」是同一套顺序
     self.keyDates = MVKeyDateStore.load().sorted { $0.date < $1.date }
     self.tableView.reloadData()

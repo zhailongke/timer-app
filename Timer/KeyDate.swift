@@ -121,6 +121,36 @@ struct MVKeyDateCountdownItem: Equatable {
   var remaining: MVKeyDateRemaining
 }
 
+/// 总小时数按「一天算几小时」折算的设置。一天 24 小时太粗时用得上：
+/// 比如一天只打算学 10 小时，还剩 55 天就是 550 小时
+enum MVKeyDateSettings {
+  static let didChangeNotification = Notification.Name("MVKeyDateSettingsDidChange")
+
+  /// 没设置过就按一天 24 小时
+  static let defaultHoursPerDay: Double = 24
+
+  static func hoursPerDay(from defaults: UserDefaults = .standard) -> Double {
+    let value = defaults.double(forKey: MVUserDefaultsKeys.keyDatesHoursPerDay)
+    // 没存过（0）或填了不合理的数都按默认的来
+    return Self.validated(value)
+  }
+
+  /// 存进去；nil 或超出范围就清掉，回到默认
+  static func save(hoursPerDay: Double?, to defaults: UserDefaults = .standard) {
+    if let hoursPerDay, hoursPerDay >= 1, hoursPerDay <= 24 {
+      defaults.set(hoursPerDay, forKey: MVUserDefaultsKeys.keyDatesHoursPerDay)
+    } else {
+      defaults.removeObject(forKey: MVUserDefaultsKeys.keyDatesHoursPerDay)
+    }
+    NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+  }
+
+  private static func validated(_ value: Double) -> Double {
+    guard value >= 1, value <= 24 else { return Self.defaultHoursPerDay }
+    return value
+  }
+}
+
 /// 倒计时怎么算、怎么排版
 enum MVKeyDateCountdown {
   /// 表盘下沿放得下的条数；再多只显示最近的前几条
@@ -176,15 +206,26 @@ enum MVKeyDateCountdown {
     return "即将"
   }
 
-  /// 还剩多少个小时（天折成小时，分钟不计）。只有指定了时刻的日子算得出准数
-  static func totalHours(_ remaining: MVKeyDateRemaining) -> Int {
-    remaining.days * 24 + remaining.hours
+  /// 还剩多少个小时。默认按一天 24 小时，也可以按「一天算几小时」折算
+  /// （比如一天只算 10 小时，55 天就是 550 小时而不是 1320）
+  static func totalHours(
+    _ remaining: MVKeyDateRemaining,
+    hoursPerDay: Double = MVKeyDateSettings.defaultHoursPerDay
+  ) -> Int {
+    // 先把零头折成天再乘：不足一天的部分也按同一比例走，不会出现「一天 10 小时却剩 20 小时」
+    let totalDays = Double(remaining.days)
+      + Double(remaining.hours) / 24
+      + Double(remaining.minutes) / 1_440
+    return Int(totalDays * hoursPerDay)
   }
 
   /// 表盘最下面那一行。没指定时刻的日子只按天算，硬折成小时会偏多，干脆不显示
-  static func totalHoursText(_ item: MVKeyDateCountdownItem) -> String? {
+  static func totalHoursText(
+    _ item: MVKeyDateCountdownItem,
+    hoursPerDay: Double = MVKeyDateSettings.defaultHoursPerDay
+  ) -> String? {
     guard item.keyDate.hasTime, !item.remaining.isPast else { return nil }
-    return "\(Self.totalHours(item.remaining))小时"
+    return "\(Self.totalHours(item.remaining, hoursPerDay: hoursPerDay))小时"
   }
 
   /// 管理窗口「还有」那一列：地方够，写完整

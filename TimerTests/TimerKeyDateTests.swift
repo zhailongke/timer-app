@@ -184,6 +184,39 @@ final class TimerKeyDateTests: XCTestCase {
     )
   }
 
+  /// 一天只按 10 小时算：55 天就是 550 小时，不是 1320
+  func testTotalHoursWithCustomHoursPerDay() {
+    let now = self.now()
+    let remaining = MVKeyDateRemaining(days: 55, hours: 8, minutes: 20, isPast: false)
+
+    XCTAssertEqual(MVKeyDateCountdown.totalHours(remaining), 1_328, "默认一天 24 小时")
+    XCTAssertEqual(MVKeyDateCountdown.totalHours(remaining, hoursPerDay: 10), 553)
+    XCTAssertEqual(
+      MVKeyDateCountdown.totalHoursText(
+        self.item(self.timedKeyDate("考研", hour: 2, minute: 0, from: now), now: now),
+        hoursPerDay: 10
+      ),
+      "0小时",
+      "不到一天：零头也按同一比例折，2 小时只算 0.8 小时"
+    )
+  }
+
+  /// 折算比例存在 UserDefaults 里；没存过或填了不合理的数都按 24
+  func testHoursPerDaySetting() {
+    let defaults = self.makeDefaults()
+
+    XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 24, "没存过按默认")
+
+    MVKeyDateSettings.save(hoursPerDay: 10, to: defaults)
+    XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 10)
+
+    MVKeyDateSettings.save(hoursPerDay: 30, to: defaults)
+    XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 24, "超出范围回到默认")
+
+    MVKeyDateSettings.save(hoursPerDay: nil, to: defaults)
+    XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 24, "留空也回到默认")
+  }
+
   /// 只按天算的日子没有准确时刻，总小时数不显示
   func testTotalHoursTextIsNilWithoutTime() {
     let now = self.now()

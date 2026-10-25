@@ -277,8 +277,12 @@ final class MVClockView: NSView {
 
     guard let window = self.window else { return }
 
-    // 关键日子被增删改、或者过了午夜：时钟停着时没人每秒刷新，倒计时得自己重算
-    for name in [MVKeyDateStore.didChangeNotification, Notification.Name.NSCalendarDayChanged] {
+    // 关键日子被增删改、折算方式改了、或者过了午夜：时钟停着时没人每秒刷新，倒计时得自己重算
+    for name in [
+      MVKeyDateStore.didChangeNotification,
+      MVKeyDateSettings.didChangeNotification,
+      Notification.Name.NSCalendarDayChanged
+    ] {
       self.notificationTasks.append(
         Task { [weak self] in
           for await _ in NotificationCenter.default.mvNotifications(named: name) {

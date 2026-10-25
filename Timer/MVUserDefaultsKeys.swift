@@ -7,4 +7,6 @@ enum MVUserDefaultsKeys {
   static let historyDateFilter = "historyDateFilter"
   /// 关键日子（名字 + 日期），表盘上显示倒计时
   static let keyDates = "keyDates"
+  /// 总小时数按一天多少小时折算；没存就是一天 24 小时
+  static let keyDatesHoursPerDay = "keyDatesHoursPerDay"
 }

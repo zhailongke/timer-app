@@ -51,7 +51,8 @@ extension MVClockView {
     }
 
     // 总小时数只给最近那条算，紧跟在最后一条倒计时下面：显示几条就占第几条的位置
-    let totalHours = items.first.map { MVKeyDateCountdown.totalHoursText($0) ?? "" } ?? ""
+    let hoursPerDay = MVKeyDateSettings.hoursPerDay()
+    let totalHours = items.first.map { MVKeyDateCountdown.totalHoursText($0, hoursPerDay: hoursPerDay) ?? "" } ?? ""
     self.totalHoursLabel.string = totalHours
     guard !totalHours.isEmpty else { return }
 
