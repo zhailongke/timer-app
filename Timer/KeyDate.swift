@@ -176,6 +176,17 @@ enum MVKeyDateCountdown {
     return "即将"
   }
 
+  /// 还剩多少个小时（天折成小时，分钟不计）。只有指定了时刻的日子算得出准数
+  static func totalHours(_ remaining: MVKeyDateRemaining) -> Int {
+    remaining.days * 24 + remaining.hours
+  }
+
+  /// 表盘最下面那一行。没指定时刻的日子只按天算，硬折成小时会偏多，干脆不显示
+  static func totalHoursText(_ item: MVKeyDateCountdownItem) -> String? {
+    guard item.keyDate.hasTime, !item.remaining.isPast else { return nil }
+    return "\(Self.totalHours(item.remaining))小时"
+  }
+
   /// 管理窗口「还有」那一列：地方够，写完整
   static func text(_ item: MVKeyDateCountdownItem) -> String {
     guard item.keyDate.hasTime else {

@@ -165,6 +165,34 @@ final class TimerKeyDateTests: XCTestCase {
     XCTAssertEqual(self.calendar.component(.second, from: keyDate.date), 0)
   }
 
+  /// 表盘最下面那一行：天和小时折成一个总小时数
+  func testTotalHoursText() {
+    let now = self.now()
+
+    XCTAssertEqual(
+      MVKeyDateCountdown.totalHoursText(
+        self.item(self.timedKeyDate("考研", hour: 50, minute: 20, from: now), now: now)
+      ),
+      "50小时",
+      "2 天 2 小时"
+    )
+    XCTAssertEqual(
+      MVKeyDateCountdown.totalHoursText(
+        self.item(self.timedKeyDate("考研", hour: 5, minute: 20, from: now), now: now)
+      ),
+      "5小时"
+    )
+  }
+
+  /// 只按天算的日子没有准确时刻，总小时数不显示
+  func testTotalHoursTextIsNilWithoutTime() {
+    let now = self.now()
+
+    XCTAssertNil(
+      MVKeyDateCountdown.totalHoursText(self.item(self.keyDate("考研", offset: 55, from: now), now: now))
+    )
+  }
+
   /// 老版本存的日子没有 hasTime 字段：解出来当「没指定时刻」
   func testDecodesLegacyKeyDateWithoutHasTime() throws {
     let legacy = KeyDate(title: "考研", date: Date(), calendar: self.calendar)

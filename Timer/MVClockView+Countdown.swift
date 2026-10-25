@@ -3,18 +3,28 @@ import AppKit
 // MARK: - 关键日子倒计时
 
 extension MVClockView {
-  /// 三条倒计时的位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小
+  /// 三条倒计时的位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小。
+  /// 最下面还留了一行给总小时数，所以三行整体上移了
   static func makeCountdownLabels() -> [MVLabel] {
-    let lines: [(originY: CGFloat, width: CGFloat)] = [(42, 92), (31, 76), (20, 46)]
+    let lines: [(originY: CGFloat, width: CGFloat)] = [(49, 100), (38, 88), (27, 72)]
     return lines.map { originY, width in
-      let label = MVLabel(frame: NSRect(x: (Self.designSize - width) / 2, y: originY, width: width, height: 11))
-      label.font = Self.countdownFont
-      label.alignment = .center
-      label.lineBreakMode = .byTruncatingTail
-      label.textColor = MVResource.color("seconds")
-      label.alphaValue = 0.9
-      return label
+      Self.countdownLabel(originY: originY, width: width)
     }
+  }
+
+  /// 总小时数那一行：在三条倒计时的下面，已经贴着圆的下沿，能用的宽度最小
+  static func makeTotalHoursLabel() -> MVLabel {
+    Self.countdownLabel(originY: 16, width: 46)
+  }
+
+  private static func countdownLabel(originY: CGFloat, width: CGFloat) -> MVLabel {
+    let label = MVLabel(frame: NSRect(x: (Self.designSize - width) / 2, y: originY, width: width, height: 11))
+    label.font = Self.countdownFont
+    label.alignment = .center
+    label.lineBreakMode = .byTruncatingTail
+    label.textColor = MVResource.color("seconds")
+    label.alphaValue = 0.9
+    return label
   }
 
   /// 刷新表盘下沿的倒计时。同一分钟内不重复算（每秒钟都会走到这里）；
@@ -36,5 +46,9 @@ extension MVClockView {
       }
       label.string = MVKeyDateCountdown.line(items[index])
     }
+
+    // 总小时数只给最近那条算：下面这行最窄，写不下名字
+    let nearest = items.first
+    self.totalHoursLabel.string = nearest.map { MVKeyDateCountdown.totalHoursText($0) ?? "" } ?? ""
   }
 }

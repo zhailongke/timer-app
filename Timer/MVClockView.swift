@@ -43,7 +43,7 @@ final class MVClockView: NSView {
   }()
 
   let secondsLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 56, width: 150, height: 16))
+    let label = MVLabel(frame: NSRect(x: 0, y: 60, width: 150, height: 16))
     label.font = MVClockView.secondsFont
     label.alignment = .center
     label.textColor = MVResource.color("seconds")
@@ -52,16 +52,19 @@ final class MVClockView: NSView {
 
   /// 秒表开始计时后，在大号时间下方显示起跑时刻
   let startTimeLabel: MVLabel = {
-    let label = MVLabel(frame: NSRect(x: 0, y: 56, width: 150, height: 14))
+    let label = MVLabel(frame: NSRect(x: 0, y: 60, width: 150, height: 14))
     label.font = NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .regular)
     label.alignment = .center
     label.textColor = MVResource.color("seconds")
     return label
   }()
 
-  /// 关键日子倒计时：最多三条，按「还有几天」从小到大排，排在表盘下沿。
+  /// 关键日子倒计时：最多三条，排在表盘下沿。
   /// 越往下越靠近圆边，能用的宽度越小，所以每行的宽度按它所在的高度收窄
   let countdownLabels: [MVLabel] = MVClockView.makeCountdownLabels()
+
+  /// 倒计时最下面那一行：最近那条日子还剩多少个小时（天和小时折成一个整数）
+  let totalHoursLabel: MVLabel = MVClockView.makeTotalHoursLabel()
 
   /// 子时钟的名字，例如「子时钟1」；主时钟为空。
   /// 放在圆框外（时钟圆的下沿 y=15 之下），不挡表盘上的数字
@@ -248,6 +251,7 @@ final class MVClockView: NSView {
     for label in self.countdownLabels {
       self.addSubview(label)
     }
+    self.addSubview(self.totalHoursLabel)
     self.addSubview(self.titleLabel)
     self.addSubview(self.renameButton)
     self.addSubview(self.controlButton)
