@@ -104,4 +104,4 @@ Mark the dates that matter (for example `考研 · 12 月 19 日`) and the clock
 - Right-click **关键日子…** to open a window where dates can be added, changed and removed
 - Up to three upcoming dates show at once, soonest first: **the nearest date sits on top**
 - A date that is today reads 今天; dates that have passed drop off by themselves
-- Dates live in `UserDefaults`, so they survive a restart
+- Dates live in `UserDefaults`, so they survive a restart. Tick 指定时刻 in the editor and pick an hour and minute to make the countdown exact: the clock face then counts down to the hour and minute (2天2时 / 5时20分) instead of whole days

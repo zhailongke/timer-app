@@ -49,7 +49,7 @@ final class MVKeyDateManager: NSWindowController {
     self.buildFooter(in: content)
   }
 
-  /// 名字 / 日期 / 还有，三列
+  /// 名字 / 日期（勾了时刻的带时分）/ 还有，三列
   private func buildTable() -> NSScrollView {
     let nameColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("title"))
     nameColumn.title = "名字"
@@ -59,14 +59,14 @@ final class MVKeyDateManager: NSWindowController {
 
     let dateColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("date"))
     dateColumn.title = "日期"
-    dateColumn.width = 140
-    dateColumn.minWidth = 110
+    dateColumn.width = 168
+    dateColumn.minWidth = 130
     dateColumn.resizingMask = .userResizingMask
 
     let daysColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("days"))
     daysColumn.title = "还有"
-    daysColumn.width = 80
-    daysColumn.minWidth = 60
+    daysColumn.width = 96
+    daysColumn.minWidth = 76
     daysColumn.resizingMask = .userResizingMask
 
     for column in [nameColumn, dateColumn, daysColumn] {
@@ -121,7 +121,7 @@ final class MVKeyDateManager: NSWindowController {
     guard let result = MVKeyDateEditor.edit(
       draft,
       title: "添加关键日子",
-      message: "加好之后表盘下方就会显示还有多少天"
+      message: "勾上「指定时刻」，倒计时就会精确到还有几小时几分钟"
     ) else { return }
 
     MVKeyDateStore.add(result)
@@ -135,7 +135,7 @@ final class MVKeyDateManager: NSWindowController {
     guard let result = MVKeyDateEditor.edit(
       draft,
       title: "修改关键日子",
-      message: "表盘上最多显示最近的三条，按「还有几天」从小到大排"
+      message: "表盘上最多显示最近的三条；勾了「指定时刻」的会精确到小时分钟"
     ) else { return }
 
     MVKeyDateStore.update(result)
@@ -189,17 +189,21 @@ extension MVKeyDateManager: NSTableViewDataSource, NSTableViewDelegate {
   func tableView(_: NSTableView, objectValueFor column: NSTableColumn?, row: Int) -> Any? {
     guard self.keyDates.indices.contains(row) else { return nil }
     let keyDate = self.keyDates[row]
-    let days = MVKeyDateCountdown.days(to: keyDate.date)
 
     switch column?.identifier.rawValue {
     case "title":
       return keyDate.title
 
     case "date":
-      return Self.dateFormatter.string(from: keyDate.date)
+      let formatter = keyDate.hasTime ? Self.dateTimeFormatter : Self.dateFormatter
+      return formatter.string(from: keyDate.date)
 
     default:
-      return MVKeyDateCountdown.daysText(days)
+      let item = MVKeyDateCountdownItem(
+        keyDate: keyDate,
+        remaining: keyDate.remaining()
+      )
+      return MVKeyDateCountdown.text(item)
     }
   }
 
@@ -211,10 +215,18 @@ extension MVKeyDateManager: NSTableViewDataSource, NSTableViewDelegate {
 }
 
 extension MVKeyDateManager {
-  /// 表里的日期：年份不同就带上年份，同年只写月日
+  /// 表里的日期：只算到天的写成「2026年12月19日」
   static let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy年M月d日"
+    formatter.locale = Locale(identifier: "zh_CN")
+    return formatter
+  }()
+
+  /// 指定了时刻的再带上时分：「2026年12月19日 08:30」
+  static let dateTimeFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy年M月d日 HH:mm"
     formatter.locale = Locale(identifier: "zh_CN")
     return formatter
   }()

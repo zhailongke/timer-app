@@ -110,8 +110,8 @@ final class MVClockView: NSView {
   let minutesLabelSuffixWidth = "'".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let minutesLabelSecondsSuffixWidth = "\"".size(withAttributes: [.font: MVClockView.minutesFont]).width
   let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
-  /// 上次算倒计时是哪一天（0 点）；同一天内不用反复算
-  var countdownRefreshDay: Date?
+  /// 上次算倒计时是哪一分钟；同一分钟内不用反复算（指定了时刻的倒计时要一分钟一跳）
+  var countdownRefreshMinute: TimeInterval?
 
   /// 顶部时钟用 jj:mm，秒表起始时刻用 jj:mm:ss，都跟随系统 12/24 小时制
   private static func formatter(template: String) -> DateFormatter {

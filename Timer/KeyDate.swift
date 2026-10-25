@@ -1,28 +1,78 @@
 import Foundation
 
-/// 关键日子：一个名字 + 一个日期（例如「考研 12 月 19 日」），表盘上显示还有多少天
+/// 关键日子：一个名字 + 一个日期（例如「考研 12 月 19 日」），表盘上显示还有多久
 struct KeyDate: Codable, Equatable, Identifiable, Sendable {
   var id: UUID
   var title: String
-  /// 当天 0 点：存的时候归一过，天数按自然日算，不受具体时刻与夏令时影响
+  /// 没指定时刻时是当天 0 点，指定了就是精确到分的那一刻（秒归零）
   var date: Date
+  /// 有没有指定具体时刻：指定了倒计时才算到小时分钟，否则只算到天
+  var hasTime: Bool
 
-  init(title: String, date: Date, id: UUID = UUID(), calendar: Calendar = .current) {
+  init(
+    title: String,
+    date: Date,
+    id: UUID = UUID(),
+    hasTime: Bool = false,
+    calendar: Calendar = .current
+  ) {
     self.title = title
-    self.date = calendar.startOfDay(for: date)
     self.id = id
+    self.hasTime = hasTime
+    self.date = Self.normalized(date, hasTime: hasTime, calendar: calendar)
+  }
+
+  /// 只算到天的日子归一到当天 0 点：天数按自然日算，不受具体时刻与夏令时影响。
+  /// 指定了时刻的只把秒抹掉，免得界面上出现「3分」「4分」来回跳
+  static func normalized(_ date: Date, hasTime: Bool, calendar: Calendar) -> Date {
+    guard hasTime else { return calendar.startOfDay(for: date) }
+    return calendar.date(bySetting: .second, value: 0, of: date) ?? date
   }
 
   private enum CodingKeys: String, CodingKey {
-    case date, id, title
+    case date, hasTime, id, title
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.id = try container.decode(UUID.self, forKey: .id)
     self.title = try container.decode(String.self, forKey: .title)
+    // 老版本存的日子没有这个字段：当它没指定时刻，行为跟以前一样
+    self.hasTime = try container.decodeIfPresent(Bool.self, forKey: .hasTime) ?? false
     let date = try container.decode(Date.self, forKey: .date)
-    self.date = Calendar.current.startOfDay(for: date)
+    self.date = Self.normalized(date, hasTime: self.hasTime, calendar: .current)
+  }
+}
+
+/// 距离某个日子还剩多久
+struct MVKeyDateRemaining: Equatable {
+  /// 整天的部分。没指定时刻时是自然日天数，指定了是按 24 小时折算的
+  var days: Int
+  var hours: Int
+  var minutes: Int
+  /// 已经到了或者过了
+  var isPast: Bool
+}
+
+extension KeyDate {
+  /// 还有多久：没指定时刻的只算到天（今天就是 0 天），指定了的精确到分钟
+  func remaining(from now: Date = Date(), calendar: Calendar = .current) -> MVKeyDateRemaining {
+    guard self.hasTime else {
+      let days = MVKeyDateCountdown.days(to: self.date, from: now, calendar: calendar)
+      return MVKeyDateRemaining(days: days, hours: 0, minutes: 0, isPast: days < 0)
+    }
+
+    let components = calendar.dateComponents([.day, .hour, .minute], from: now, to: self.date)
+    let days = components.day ?? 0
+    let hours = components.hour ?? 0
+    let minutes = components.minute ?? 0
+    return MVKeyDateRemaining(
+      // 过了的分量是负数，这里只留给显示用，判「过没过」看 isPast
+      days: Swift.max(0, days),
+      hours: Swift.max(0, hours),
+      minutes: Swift.max(0, minutes),
+      isPast: self.date <= now
+    )
   }
 }
 
@@ -65,6 +115,12 @@ enum MVKeyDateStore {
   }
 }
 
+/// 一条要显示的倒计时：哪个日子 + 还有多久
+struct MVKeyDateCountdownItem: Equatable {
+  var keyDate: KeyDate
+  var remaining: MVKeyDateRemaining
+}
+
 /// 倒计时怎么算、怎么排版
 enum MVKeyDateCountdown {
   /// 表盘下沿放得下的条数；再多只显示最近的前几条
@@ -80,30 +136,66 @@ enum MVKeyDateCountdown {
     return components.day ?? 0
   }
 
-  /// 还没过完的日子，按「还有几天」从小到大排：先显示日历上最近的那个
+  /// 还没到的日子，按先后排：先显示日历上最近的那个。
+  /// 同一天里，没指定时刻的（当天 0 点）排在指定了时刻的前面
   static func upcoming(
     from dates: [KeyDate],
     now: Date = Date(),
     calendar: Calendar = .current
-  ) -> [(keyDate: KeyDate, days: Int)] {
-    let items = dates.map { (keyDate: $0, days: Self.days(to: $0.date, from: now, calendar: calendar)) }
-    let upcoming = items
-      .filter { $0.days >= 0 }
-      .sorted { $0.days == $1.days ? $0.keyDate.date < $1.keyDate.date : $0.days < $1.days }
-    return Array(upcoming.prefix(Self.maxLines))
-  }
-
-  /// 天数怎么念：今天 / 已过 / 55 天
-  static func daysText(_ days: Int) -> String {
-    if days == 0 { return "今天" }
-    if days < 0 { return "已过" }
-    return "\(days) 天"
+  ) -> [MVKeyDateCountdownItem] {
+    let items = dates
+      .sorted { $0.date < $1.date }
+      .map {
+        MVKeyDateCountdownItem(
+          keyDate: $0,
+          remaining: $0.remaining(from: now, calendar: calendar)
+        )
+      }
+    return Array(items.filter { !$0.remaining.isPast }.prefix(Self.maxLines))
   }
 
   /// 表盘上那一行：字号小、地方窄，名字过长会被截断
-  static func line(title: String, days: Int) -> String {
-    if days == 0 { return "\(title) 今天" }
-    if days < 0 { return "\(title) 已过" }
-    return "\(title) \(days)天"
+  static func line(_ item: MVKeyDateCountdownItem) -> String {
+    "\(item.keyDate.title) \(Self.shortText(item))"
+  }
+
+  /// 表盘放得下的写法：够一天就写到「天 + 时」，不够一天就写「时 + 分」
+  static func shortText(_ item: MVKeyDateCountdownItem) -> String {
+    // 没指定时刻的只按天算：目标是 0 点，硬算时分只会得到负数
+    guard item.keyDate.hasTime else {
+      return item.remaining.days <= 0 ? "今天" : "\(item.remaining.days)天"
+    }
+
+    let remaining = item.remaining
+    if remaining.isPast { return "已过" }
+    if remaining.days > 0 {
+      return remaining.hours > 0 ? "\(remaining.days)天\(remaining.hours)时" : "\(remaining.days)天"
+    }
+    if remaining.hours > 0 { return "\(remaining.hours)时\(remaining.minutes)分" }
+    if remaining.minutes > 0 { return "\(remaining.minutes)分" }
+    return "即将"
+  }
+
+  /// 管理窗口「还有」那一列：地方够，写完整
+  static func text(_ item: MVKeyDateCountdownItem) -> String {
+    guard item.keyDate.hasTime else {
+      return item.remaining.days <= 0 ? "今天" : "\(item.remaining.days) 天"
+    }
+
+    let remaining = item.remaining
+    if remaining.isPast { return "已过" }
+    if remaining.days > 0 {
+      let tail: String
+      if remaining.hours > 0 {
+        tail = "\(remaining.hours)时\(remaining.minutes)分"
+      } else if remaining.minutes > 0 {
+        tail = "\(remaining.minutes)分"
+      } else {
+        tail = ""
+      }
+      return "\(remaining.days)天" + tail
+    }
+    if remaining.hours > 0 { return "\(remaining.hours)时\(remaining.minutes)分" }
+    return "\(remaining.minutes)分"
   }
 }

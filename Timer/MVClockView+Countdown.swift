@@ -17,24 +17,24 @@ extension MVClockView {
     }
   }
 
-  /// 刷新表盘下沿的倒计时。同一天内不重复算（每秒钟都会走到这里）；
+  /// 刷新表盘下沿的倒计时。同一分钟内不重复算（每秒钟都会走到这里）；
   /// 关键日子改了或跨过午夜时用 force 强制重算
   func updateCountdownLabels(force: Bool = false) {
     let calendar = Calendar.current
-    let today = calendar.startOfDay(for: Date())
+    let now = Date()
+    let minute = floor(now.timeIntervalSinceReferenceDate / 60)
 
-    if !force, self.countdownRefreshDay == today { return }
-    self.countdownRefreshDay = today
+    if !force, self.countdownRefreshMinute == minute { return }
+    self.countdownRefreshMinute = minute
 
-    let items = MVKeyDateCountdown.upcoming(from: MVKeyDateStore.load(), now: Date(), calendar: calendar)
+    let items = MVKeyDateCountdown.upcoming(from: MVKeyDateStore.load(), now: now, calendar: calendar)
 
     for (index, label) in self.countdownLabels.enumerated() {
       guard index < items.count else {
         label.string = ""
         continue
       }
-      let item = items[index]
-      label.string = MVKeyDateCountdown.line(title: item.keyDate.title, days: item.days)
+      label.string = MVKeyDateCountdown.line(items[index])
     }
   }
 }
