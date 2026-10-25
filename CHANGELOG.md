@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Records left in `UserDefaults` by older builds are migrated to the file on launch, and the old key is then removed so the preferences plist shrinks back
 - Key dates: right-click 关键日子… to keep a list of named dates (e.g. 考研 12 月 19 日); the clock face shows how many days are left, up to three at a time, soonest first, and dates that have passed drop off by themselves
 - Key dates can carry an exact hour and minute: tick 指定时刻 in the editor and pick a time, and the countdown counts down to that moment (2天2时 on the clock face, 5时20分 within an hour, 25分 within the hour mark) instead of whole days; the countdown now refreshes every minute rather than once a day, and a date whose moment has already passed drops off
-- A line under the countdown shows the total hours left to the nearest date (50小时); the three countdown lines moved up to make room for it
+- A line under the countdown shows the total hours left to the nearest date (50小时); it sits directly beneath the last countdown line rather than at the bottom of the clock face, and the three countdown lines moved up to make room for it
 - The big time and the stopwatch block are smaller than before, and the clock face is laid out tighter, to leave room for the countdown under the time
 - 历史记录… opens a window instead of a menu list: root level is one row per main clock session, click into a row to drill down through its child clock records, with rename and delete: 子时钟 ▸ 管理模板… opens a window listing every template with 修改… (name / mode / duration / auto-start, plus child names) and 删除 (with confirmation)
 - The rename input field starts short and grows with the typed name instead of always spanning the full width

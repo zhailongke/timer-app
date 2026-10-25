@@ -3,16 +3,19 @@ import AppKit
 // MARK: - 关键日子倒计时
 
 extension MVClockView {
-  /// 三条倒计时的位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小。
-  /// 最下面还留了一行给总小时数，所以三行整体上移了
+  /// 倒计时区的四行位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小。
+  /// 前三条放倒计时，第四条留给总小时数
+  private static let countdownLineFrames: [(originY: CGFloat, width: CGFloat)] = [
+    (49, 100), (38, 88), (27, 72), (16, 46)
+  ]
+
   static func makeCountdownLabels() -> [MVLabel] {
-    let lines: [(originY: CGFloat, width: CGFloat)] = [(49, 100), (38, 88), (27, 72)]
-    return lines.map { originY, width in
-      Self.countdownLabel(originY: originY, width: width)
-    }
+    Self.countdownLineFrames
+      .prefix(MVKeyDateCountdown.maxLines)
+      .map { Self.countdownLabel(originY: $0.originY, width: $0.width) }
   }
 
-  /// 总小时数那一行：在三条倒计时的下面，已经贴着圆的下沿，能用的宽度最小
+  /// 总小时数那一行：位置随显示了几条倒计时走，见 updateCountdownLabels
   static func makeTotalHoursLabel() -> MVLabel {
     Self.countdownLabel(originY: 16, width: 46)
   }
@@ -47,8 +50,18 @@ extension MVClockView {
       label.string = MVKeyDateCountdown.line(items[index])
     }
 
-    // 总小时数只给最近那条算：下面这行最窄，写不下名字
-    let nearest = items.first
-    self.totalHoursLabel.string = nearest.map { MVKeyDateCountdown.totalHoursText($0) ?? "" } ?? ""
+    // 总小时数只给最近那条算，紧跟在最后一条倒计时下面：显示几条就占第几条的位置
+    let totalHours = items.first.map { MVKeyDateCountdown.totalHoursText($0) ?? "" } ?? ""
+    self.totalHoursLabel.string = totalHours
+    guard !totalHours.isEmpty else { return }
+
+    let index = min(items.count, Self.countdownLineFrames.count - 1)
+    let line = Self.countdownLineFrames[index]
+    self.totalHoursLabel.frame = NSRect(
+      x: (Self.designSize - line.width) / 2,
+      y: line.originY,
+      width: line.width,
+      height: 11
+    )
   }
 }
