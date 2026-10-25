@@ -8,19 +8,26 @@ final class MVHistoryTracker {
   static let shared = MVHistoryTracker()
 
   private let defaults: UserDefaults
+  /// 历史记录写在这个文件里，不再走 UserDefaults
+  private let storeURL: URL
   private(set) var records: [ClockRecord] = []
   /// 记录有变化就通知一声（历史记录窗口靠它自动刷新）
   var onChange: (() -> Void)?
 
   private var tickTask: Task<Void, Never>?
   private var lastSaveDate = Date.distantPast
+  /// 兜底落盘的间隔：正在跑的时钟每秒都在长，别每 3 秒就把整个文件重写一遍
+  private static let idleSaveInterval: TimeInterval = 60
   /// 每条记录建出来那一刻，时钟已经走过的秒数：
   /// 时长要减掉它才算这一段自己的（比如在历史里删掉了还在跑的那条，重新建出来时秒表已经走了一段）
   private var elapsedBaselines: [UUID: TimeInterval] = [:]
 
-  init(defaults: UserDefaults = .standard) {
+  init(storeURL: URL = MVHistoryStore.fileURL(), defaults: UserDefaults = .standard) {
+    self.storeURL = storeURL
     self.defaults = defaults
-    self.records = MVHistoryStore.load(from: defaults)
+    // 只有老版本把记录留在 UserDefaults 里才需要搬；搬完那个 key 就被删了
+    MVHistoryStore.migrateFromUserDefaults(defaults, to: storeURL)
+    self.records = MVHistoryStore.load(from: storeURL)
   }
 
   // MARK: - 建记录
@@ -129,8 +136,9 @@ final class MVHistoryTracker {
 
     guard touched else { return }
 
-    // 每秒写盘太勤，攒几秒写一次；建记录 / 收尾 / 改名这些才是立刻写
-    if Date().timeIntervalSince(self.lastSaveDate) >= 3 {
+    // 每秒只改内存里的时长，落盘交给建记录 / 收尾 / 改名这些真正的变动。
+    // 这里只留一个兜底：跑久了万一崩了，最多丢这一分钟的时长
+    if Date().timeIntervalSince(self.lastSaveDate) >= Self.idleSaveInterval {
       self.save()
     }
     self.onChange?()
@@ -147,14 +155,12 @@ final class MVHistoryTracker {
   /// 退出前用：把没落盘的记录刷到磁盘，免得这次白记
   func flush() {
     self.save()
-    self.defaults.synchronize()
   }
 
   private func save() {
-    if self.records.count > MVHistoryStore.limit {
-      self.records.removeFirst(self.records.count - MVHistoryStore.limit)
-    }
-    MVHistoryStore.save(self.records, to: self.defaults)
+    // 内存里也一起裁，不然树会一直留在进程里
+    self.records.trim(toTotal: MVHistoryStore.totalLimit)
+    MVHistoryStore.save(self.records, to: self.storeURL)
     self.lastSaveDate = Date()
   }
 

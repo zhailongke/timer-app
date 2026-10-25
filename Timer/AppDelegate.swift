@@ -179,7 +179,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
   }
 
   private func handleUserDefaultsChange() {
-    self.staysOnTop = UserDefaults.standard.bool(forKey: MVUserDefaultsKeys.staysOnTop)
+    // 先比一下再赋值：didSet 不管值变没变都会跑，而每次写盘都会来一次通知。
+    // 不挡住的话，所有窗口的 level / collectionBehavior 会被反复重设，拖动窗口时会顿
+    let staysOnTop = UserDefaults.standard.bool(forKey: MVUserDefaultsKeys.staysOnTop)
+    if staysOnTop != self.staysOnTop {
+      self.staysOnTop = staysOnTop
+    }
   }
 
   private func observeNotifications() {

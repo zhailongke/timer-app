@@ -94,7 +94,7 @@ Every clock session is recorded with its **start time, duration and end time**, 
 - **历史记录…** opens a separate window (not a menu list). Its root level is one row per main clock session; **click into a row** to see the child clock records under it, and keep drilling down level by level
 - Select a row to **rename** or **delete** it; a 返回 button and a breadcrumb show where you are
 - A clock that never actually ran (under 1 second) and has no child records leaves nothing behind
-- Records live in `UserDefaults`; the most recent 200 main clock records are kept: select one and press 修改… (or double-click) to change its name, mode (countdown / stopwatch), duration and "start immediately"; press 删除 to remove it. Edits are stored by id, so renaming never leaves a stale copy behind.
+- Records live in `~/Library/Application Support/Timer/history.json`; the most recent 2000 records are kept (child clock records included): select one and press 修改… (or double-click) to change its name, mode (countdown / stopwatch), duration and "start immediately"; press 删除 to remove it. Edits are stored by id, so renaming never leaves a stale copy behind.
 - Templates are stored in `UserDefaults`, so they survive a restart. Saving under an existing name replaces that template.
 
 ### Key dates

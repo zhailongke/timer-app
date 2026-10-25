@@ -117,15 +117,41 @@ extension Array where Element == ClockRecord {
       self.append(record)
       return
     }
+    // 找到就只挂这一份。递归必须把「找到了」往回传：
+    // 以前每棵子树都各走一遍兜底分支，同一条记录被插进去好几份，树就这么指数级涨起来的
+    if self.append(record, underParent: parentID) { return }
+    // 上级记录已经被删掉了就落到根层，总比丢了好
+    self.append(record)
+  }
+
+  /// 在这一层的下级里找 parentID，找到了就挂上去并返回 true
+  private mutating func append(_ record: ClockRecord, underParent parentID: UUID) -> Bool {
     for index in self.indices {
       if self[index].id == parentID {
         self[index].children.append(record)
+        return true
+      }
+      if self[index].children.append(record, underParent: parentID) { return true }
+    }
+    return false
+  }
+
+  /// 含所有下级的条数
+  var totalCount: Int {
+    self.reduce(0) { $0 + 1 + $1.children.totalCount }
+  }
+
+  /// 只留最近 limit 条（含下级）：从最旧的根层记录开始整条丢。
+  /// 只裁根层是不够的 —— 下级能无限长，树的形状不受控
+  mutating func trim(toTotal limit: Int) {
+    while self.totalCount > limit, !self.isEmpty {
+      // 只剩一条还超标：往它的下级里继续丢
+      if self.count == 1 {
+        self[0].children.trim(toTotal: Swift.max(0, limit - 1))
         return
       }
-      self[index].children.append(record, toParent: parentID)
+      self.removeFirst()
     }
-    // 上级记录已经被删掉了就落到根层，总比丢了好
-    self.append(record)
   }
 
   /// 按 id 改一条记录（含所有下级）
@@ -169,24 +195,45 @@ extension Array where Element == ClockRecord {
   }
 }
 
-/// 历史记录存在 UserDefaults 里，根一层是每次主时钟的记录
+/// 历史记录单独存一个 JSON 文件，根一层是每次主时钟的记录。
+/// 早先存在 UserDefaults 里：那个 plist 一改就要整份重写，记录攒到 141 MB 之后
+/// 每次落盘都要编码上百 MB，界面被拖得点一下、拖一下都卡
 enum MVHistoryStore {
-  /// 最多留多少条主时钟记录，再旧的从头丢掉
-  static let limit = 200
+  /// 留多少条记录（含所有下级），再旧的从头丢掉
+  static let totalLimit = 2_000
 
-  static func load(from defaults: UserDefaults = .standard) -> [ClockRecord] {
-    guard let data = defaults.data(forKey: MVUserDefaultsKeys.historyRecords),
+  static func fileURL() -> URL {
+    let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+      ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
+    return support
+      .appendingPathComponent("Timer", isDirectory: true)
+      .appendingPathComponent("history.json")
+  }
+
+  static func load(from url: URL = Self.fileURL()) -> [ClockRecord] {
+    guard let data = try? Data(contentsOf: url),
       let records = try? JSONDecoder().decode([ClockRecord].self, from: data)
     else { return [] }
     return records
   }
 
-  static func save(_ records: [ClockRecord], to defaults: UserDefaults = .standard) {
+  static func save(_ records: [ClockRecord], to url: URL = Self.fileURL()) {
     var trimmed = records
-    if trimmed.count > Self.limit {
-      trimmed.removeFirst(trimmed.count - Self.limit)
-    }
+    trimmed.trim(toTotal: Self.totalLimit)
     guard let data = try? JSONEncoder().encode(trimmed) else { return }
-    defaults.set(data, forKey: MVUserDefaultsKeys.historyRecords)
+    try? FileManager.default.createDirectory(
+      at: url.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    try? data.write(to: url, options: .atomic)
+  }
+
+  /// 老版本把记录存在 UserDefaults 里：搬一次到文件，然后把那个 key 删掉，plist 才有机会瘦回去
+  static func migrateFromUserDefaults(_ defaults: UserDefaults, to url: URL = Self.fileURL()) {
+    guard let data = defaults.data(forKey: MVUserDefaultsKeys.historyRecords),
+      let records = try? JSONDecoder().decode([ClockRecord].self, from: data)
+    else { return }
+    self.save(records, to: url)
+    defaults.removeObject(forKey: MVUserDefaultsKeys.historyRecords)
   }
 }
