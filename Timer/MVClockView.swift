@@ -287,6 +287,8 @@ final class MVClockView: NSView {
         Task { [weak self] in
           for await _ in NotificationCenter.default.mvNotifications(named: name) {
             self?.updateCountdownLabels(force: true)
+            // 每日时长改了，正计时的蓝条占比也得跟着重画
+            self?.layoutSubviews()
           }
         }
       )

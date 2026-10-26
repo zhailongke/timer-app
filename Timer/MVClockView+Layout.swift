@@ -5,10 +5,21 @@ import AppKit
 extension MVClockView {
   private var progress: CGFloat {
     if self.mode == .stopwatch {
-      // 秒表：每小时绕满一圈
-      return self.seconds.truncatingRemainder(dividingBy: 3_600) / 3_600
+      // 正计时：蓝条是「今天已经用掉多少」，一天多长按关键日子里的每日时长算
+      return Self.stopwatchDayProgress(
+        elapsed: self.elapsedSeconds,
+        dayHours: MVKeyDateSettings.hoursPerDay()
+      )
     }
+    // 倒计时：蓝条还是小时刻度
     return self.invertProgressToScale(self.seconds / 60.0 / 60.0)
+  }
+
+  /// 正计时模式下的蓝条占比：已经计时的时长占一天的比例，用满了就满圈
+  static func stopwatchDayProgress(elapsed: CGFloat, dayHours: Double) -> CGFloat {
+    let daySeconds = CGFloat(dayHours) * 3_600
+    guard daySeconds > 0 else { return 0 }
+    return min(1, max(0, elapsed / daySeconds))
   }
 
   func center(_ view: NSView) {

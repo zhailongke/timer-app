@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 @testable import Timer
 import XCTest
 
@@ -198,6 +198,29 @@ final class TimerKeyDateTests: XCTestCase {
       ),
       "0小时",
       "不到一天：零头也按同一比例折，2 小时只算 0.8 小时"
+    )
+  }
+
+  /// 正计时的蓝条：已经计时的时长占一天的比例，一天多长按每日时长算
+  func testStopwatchDayProgress() {
+    XCTAssertEqual(MVClockView.stopwatchDayProgress(elapsed: 0, dayHours: 10), 0)
+    XCTAssertEqual(
+      MVClockView.stopwatchDayProgress(elapsed: 3_600, dayHours: 10),
+      0.1,
+      accuracy: 0.0001,
+      "学满 1 小时 / 一天 10 小时"
+    )
+    XCTAssertEqual(MVClockView.stopwatchDayProgress(elapsed: 10 * 3_600, dayHours: 10), 1)
+    XCTAssertEqual(
+      MVClockView.stopwatchDayProgress(elapsed: 20 * 3_600, dayHours: 10),
+      1,
+      "超时就满圈，不再绕第二圈"
+    )
+    XCTAssertEqual(
+      MVClockView.stopwatchDayProgress(elapsed: 3_600, dayHours: 24),
+      1.0 / 24,
+      accuracy: 0.0001,
+      "默认一天 24 小时"
     )
   }
 
