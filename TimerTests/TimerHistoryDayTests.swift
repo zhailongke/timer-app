@@ -88,6 +88,39 @@ final class TimerHistoryDayTests: XCTestCase {
     XCTAssertEqual(record.duration(within: today, dayEnd: tomorrow), 0)
   }
 
+  /// 主时钟跑着、子时钟也在跑：同一段时间只能算一次，不然今天 8 小时会被算成 16.8 小时
+  func testSecondsTodayDoesNotCountOverlapTwice() {
+    let today = self.calendar.startOfDay(for: Date())
+    let tracker = MVHistoryTracker(storeURL: self.makeStoreURL(), defaults: self.makeDefaults())
+    let start = self.at(hour: 10, day: today)
+    // 主时钟 10:00-11:00，子时钟同一段（子时钟就是主时钟细分的）
+    let main = self.record(
+      name: "主时钟",
+      from: start,
+      seconds: 3_600,
+      children: [self.record(name: "子时钟", from: start, seconds: 3_600)]
+    )
+
+    tracker.mutate { $0.append(main) }
+
+    XCTAssertEqual(tracker.secondsToday(now: start.addingTimeInterval(7_200)), 3_600, accuracy: 1)
+  }
+
+  /// 不重叠的两段照常相加
+  func testSecondsTodayAddsSessionsThatDoNotOverlap() {
+    let today = self.calendar.startOfDay(for: Date())
+    let tracker = MVHistoryTracker(storeURL: self.makeStoreURL(), defaults: self.makeDefaults())
+    let morning = self.record(name: "上午", from: self.at(hour: 10, day: today), seconds: 3_600)
+    let afternoon = self.record(name: "下午", from: self.at(hour: 14, day: today), seconds: 3_600)
+
+    tracker.mutate { records in
+      records.append(morning)
+      records.append(afternoon)
+    }
+
+    XCTAssertEqual(tracker.secondsToday(now: self.at(hour: 16, day: today)), 7_200, accuracy: 1)
+  }
+
   /// 今天的总时长：所有记录（含子时钟）加在一起
   func testSecondsTodaySumsRecordsAndChildren() {
     let today = self.calendar.startOfDay(for: Date())

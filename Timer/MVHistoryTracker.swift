@@ -157,7 +157,12 @@ final class MVHistoryTracker {
   func secondsToday(now: Date = Date(), calendar: Calendar = .current) -> TimeInterval {
     let dayStart = calendar.startOfDay(for: now)
     guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return 0 }
-    return self.records.duration(within: dayStart, dayEnd: dayEnd)
+
+    let summed = self.records.duration(within: dayStart, dayEnd: dayEnd)
+    // 主时钟和子时钟会同时在跑，直接相加把同一段时间算了两三遍（实测今天 8 小时被算成 16.8 小时，
+    // 直接顶满圈）；但暂停的时间按墙钟并集又会被算进去。两个都是真实值的上限，取小的那个更接近
+    let covered = self.records.mergedSpan(within: dayStart, dayEnd: dayEnd)
+    return Swift.min(summed, covered)
   }
 
   /// 退出前用：把没落盘的记录刷到磁盘，免得这次白记

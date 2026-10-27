@@ -160,6 +160,41 @@ extension Array where Element == ClockRecord {
     }
   }
 
+  /// 这一层以及所有下级在今天被覆盖的时间：重叠的只算一次。
+  /// 主时钟跑着的时候子时钟也在跑，两边的记录盖的是同一段时间
+  func mergedSpan(within dayStart: Date, dayEnd: Date) -> TimeInterval {
+    var intervals: [(start: Date, end: Date)] = []
+    self.collectSpans(within: dayStart, dayEnd: dayEnd, into: &intervals)
+    intervals.sort { $0.start < $1.start }
+
+    var total: TimeInterval = 0
+    var index = 0
+    while index < intervals.count {
+      var merged = intervals[index]
+      var next = index + 1
+      while next < intervals.count, intervals[next].start <= merged.end {
+        merged.end = Swift.max(merged.end, intervals[next].end)
+        next += 1
+      }
+      total += merged.end.timeIntervalSince(merged.start)
+      index = next
+    }
+    return total
+  }
+
+  private func collectSpans(
+    within dayStart: Date,
+    dayEnd: Date,
+    into intervals: inout [(start: Date, end: Date)]
+  ) {
+    for record in self {
+      let start = Swift.max(record.startDate, dayStart)
+      let end = Swift.min(record.endDate, dayEnd)
+      if end > start { intervals.append((start: start, end: end)) }
+      record.children.collectSpans(within: dayStart, dayEnd: dayEnd, into: &intervals)
+    }
+  }
+
   /// 含所有下级的条数
   var totalCount: Int {
     self.reduce(0) { $0 + 1 + $1.children.totalCount }

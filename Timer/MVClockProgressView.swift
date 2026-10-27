@@ -55,32 +55,32 @@ final class MVClockProgressView: NSView {
   }
 
   private func drawArc(_ progress: CGFloat) {
+    let clamped = min(1, max(0, progress))
+    guard clamped > 0 else { return }
+
     let center = NSPoint(x: self.bounds.width / 2, y: self.bounds.height / 2)
-    let windowHasFocus = self.window?.isKeyWindow ?? false
+    let radius = self.bounds.width / 2
 
+    // 从 12 点起顺时针扫 clamped 圈，围成扇形当裁剪区。
+    // 不用 appendArc 的 clockwise 参数：它的旋转方向跟这里「90° 递减」的算法是反的，
+    // 进度只有 3% 时反而裁出 97% 的扇形，整圈都染成了蓝色
     let path = NSBezierPath()
-    path.move(to: NSPoint(x: self.bounds.width / 2, y: self.bounds.height))
-    path.appendArc(
-      withCenter: NSPoint(x: self.bounds.width / 2, y: self.bounds.height / 2),
-      radius: self.bounds.width / 2,
-      startAngle: 90,
-      endAngle: 90 - (progress > 1 ? 1 : progress) * 360,
-      clockwise: true
-    )
+    path.move(to: NSPoint(x: center.x, y: center.y + radius))
+    let steps = max(2, Int((clamped * 360 / 3).rounded(.up)))
+    for step in 1...steps {
+      let degrees = 90 - clamped * 360 * CGFloat(step) / CGFloat(steps)
+      let radians = degrees * .pi / 180
+      path.line(to: NSPoint(x: center.x + cos(radians) * radius, y: center.y + sin(radians) * radius))
+    }
     path.line(to: center)
+    path.close()
+
+    let image = (self.window?.isKeyWindow ?? false) ? Self.progressImage : Self.progressUnfocusImage
+
+    // 裁剪只包住画图片这一步。不恢复的话后面画的刻度也会被切在扇形里
+    NSGraphicsContext.saveGraphicsState()
     path.addClip()
-
-    let ctx = NSGraphicsContext.current
-    ctx?.saveGraphicsState()
-
-    let cgTransform = CGAffineTransform(translationX: center.x, y: center.y)
-      .rotated(by: -progress * 2 * .pi)
-      .translatedBy(x: -center.x, y: -center.y)
-    NSGraphicsContext.current?.cgContext.concatenate(cgTransform)
-
-    let image = windowHasFocus ? Self.progressImage : Self.progressUnfocusImage
     image.draw(in: self.bounds)
-
-    ctx?.restoreGraphicsState()
+    NSGraphicsContext.restoreGraphicsState()
   }
 }
