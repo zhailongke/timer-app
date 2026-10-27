@@ -240,6 +240,22 @@ final class TimerKeyDateTests: XCTestCase {
     XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 24, "留空也回到默认")
   }
 
+  /// 改完要广播一声：表盘的蓝条和总小时数靠这条通知刷新。
+  /// 之前输入框的 action 只在回车 / 失焦时才发，改了数字常常根本没存，
+  /// 表现就是「改了没反应，要再点一次添加关键日子才变」
+  func testHoursPerDayChangePostsNotification() {
+    let defaults = self.makeDefaults()
+    let expectation = self.expectation(
+      forNotification: MVKeyDateSettings.didChangeNotification,
+      object: nil
+    ) { _ in true }
+
+    MVKeyDateSettings.save(hoursPerDay: 8, to: defaults)
+
+    self.wait(for: [expectation], timeout: 1)
+    XCTAssertEqual(MVKeyDateSettings.hoursPerDay(from: defaults), 8)
+  }
+
   /// 只按天算的日子没有准确时刻，总小时数不显示
   func testTotalHoursTextIsNilWithoutTime() {
     let now = self.now()

@@ -28,6 +28,8 @@ final class MVKeyDateManager: NSWindowController {
     window.isReleasedWhenClosed = false
     window.minSize = NSSize(width: 380, height: 260)
     super.init(window: window)
+    // 直接点关闭按钮时输入框的 action 不一定发得出来，关之前再存一次
+    window.delegate = self
 
     self.buildContent()
   }
@@ -142,6 +144,7 @@ final class MVKeyDateManager: NSWindowController {
     self.hoursPerDayField.placeholderString = "24"
     self.hoursPerDayField.target = self
     self.hoursPerDayField.action = #selector(self.hoursPerDayChanged)
+    self.hoursPerDayField.delegate = self
     self.hoursPerDayField.frame = NSRect(x: 100, y: 44, width: 48, height: 20)
     self.hoursPerDayField.autoresizingMask = [.maxXMargin, .minYMargin]
     content.addSubview(self.hoursPerDayField)
@@ -155,6 +158,12 @@ final class MVKeyDateManager: NSWindowController {
   }
 
   @objc private func hoursPerDayChanged() {
+    self.applyHoursPerDay()
+  }
+
+  /// 存进 UserDefaults 并广播一声：所有时钟窗口收到后自己重画蓝条和总小时数。
+  /// 这是全局设置，不用再去点「添加…」让它生效
+  private func applyHoursPerDay() {
     let text = self.hoursPerDayField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
     MVKeyDateSettings.save(hoursPerDay: Double(text))
   }
@@ -223,6 +232,18 @@ final class MVKeyDateManager: NSWindowController {
     self.hintLabel.stringValue = self.keyDates.isEmpty
       ? "还没有关键日子：点「添加…」加一个"
       : "双击一行可以修改"
+  }
+}
+
+extension MVKeyDateManager: NSWindowDelegate, NSTextFieldDelegate {
+  /// 每敲一下就存：输入框的 action 要等回车或失焦才发，填完直接看表盘时还没存上，
+  /// 表现就是「改了但进度条没反应」
+  func controlTextDidChange(_: Notification) {
+    self.applyHoursPerDay()
+  }
+
+  func windowWillClose(_: Notification) {
+    self.applyHoursPerDay()
   }
 }
 
