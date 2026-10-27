@@ -44,10 +44,19 @@ final class MVMainView: NSView {
     keyEquivalent: ""
   )
 
-  /// 打开关键日子窗口：加 / 改 / 删要在表盘上倒计时的日子
-  private let keyDatesMenuItem = NSMenuItem(
-    title: "关键日子…",
-    action: #selector(AppDelegate.showKeyDates(_:)),
+  /// 打开事件进度窗口：加 / 改 / 删事件
+  private let eventsMenuItem = NSMenuItem(
+    title: "事件进度…",
+    action: #selector(AppDelegate.showTimerEvents(_:)),
+    keyEquivalent: ""
+  )
+
+  /// 表盘显示哪个事件的倒计时：列出所有事件，外加一个轮播开关
+  private let countdownPickMenuItem = NSMenuItem(title: "倒计时显示", action: nil, keyEquivalent: "")
+  private let countdownPickMenu = NSMenu(title: "倒计时显示")
+  private let rotateMenuItem = NSMenuItem(
+    title: "轮播显示（每 5 秒切换）",
+    action: #selector(AppDelegate.toggleEventRotation(_:)),
     keyEquivalent: ""
   )
 
@@ -117,12 +126,14 @@ final class MVMainView: NSView {
 
     self.manageTemplatesMenuItem.target = NSApplication.shared.delegate
     self.historyMenuItem.target = NSApplication.shared.delegate
-    self.keyDatesMenuItem.target = NSApplication.shared.delegate
+    self.eventsMenuItem.target = NSApplication.shared.delegate
 
     self.contextMenu.addItem(self.modeMenuItem)
     self.contextMenu.addItem(self.childMenuItem)
     self.contextMenu.addItem(self.historyMenuItem)
-    self.contextMenu.addItem(self.keyDatesMenuItem)
+    self.contextMenu.addItem(self.countdownPickMenuItem)
+    self.contextMenu.addItem(self.eventsMenuItem)
+    self.contextMenu.setSubmenu(self.countdownPickMenu, for: self.countdownPickMenuItem)
     if let menuItem = self.menuItem {
       self.contextMenu.addItem(menuItem)
     }
@@ -225,7 +236,40 @@ extension MVMainView: NSMenuDelegate {
     self.saveTemplateMenuItem.isHidden = !isChild
     self.childMenuSeparator.isHidden = !isChild
 
+    self.rebuildCountdownMenu()
     self.rebuildTemplateMenu()
+  }
+
+  /// 「倒计时显示」子菜单：列出所有事件，点谁表盘就显示谁；轮播是独立开关
+  private func rebuildCountdownMenu() {
+    self.countdownPickMenu.removeAllItems()
+
+    let events = MVEventStore.load().sorted { $0.date < $1.date }
+    let selected = MVEventSettings.selectedEventID()
+    let rotating = MVEventSettings.isRotating()
+
+    if events.isEmpty {
+      let emptyItem = NSMenuItem(title: "暂无事件，先去「事件进度…」添加", action: nil, keyEquivalent: "")
+      emptyItem.isEnabled = false
+      self.countdownPickMenu.addItem(emptyItem)
+    } else {
+      for event in events {
+        let item = NSMenuItem(
+          title: event.title,
+          action: #selector(AppDelegate.pickDisplayedEvent(_:)),
+          keyEquivalent: ""
+        )
+        item.target = NSApplication.shared.delegate
+        item.representedObject = event.id
+        item.state = (!rotating && selected == event.id) ? .on : .off
+        self.countdownPickMenu.addItem(item)
+      }
+    }
+
+    self.countdownPickMenu.addItem(.separator())
+    self.rotateMenuItem.target = NSApplication.shared.delegate
+    self.rotateMenuItem.state = rotating ? .on : .off
+    self.countdownPickMenu.addItem(self.rotateMenuItem)
   }
 
   /// 模板列表每次开菜单重建，改名/新存都能立刻看到

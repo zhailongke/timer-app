@@ -7,7 +7,7 @@ final class MVClockView: NSView {
   static let designSize: CGFloat = 150
   /// 回车键码；改名提交后要靠它认出那个漏下来的 keyUp
   static let returnKeyCode: UInt16 = 36
-  /// 大号时间比早期版本小一号：底下要腾出地方放关键日子的倒计时
+  /// 大号时间比早期版本小一号：底下要腾出地方放事件的倒计时
   static let minutesFont = NSFont.monospacedDigitSystemFont(ofSize: 27, weight: .medium)
   static let secondsFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .regular)
   /// 秒表整块「时:分:秒」自适应字号的上限，跟着大号时间一起收
@@ -59,7 +59,7 @@ final class MVClockView: NSView {
     return label
   }()
 
-  /// 关键日子倒计时：最多三条，排在表盘下沿。
+  /// 事件倒计时：最多三条，排在表盘下沿。
   /// 越往下越靠近圆边，能用的宽度越小，所以每行的宽度按它所在的高度收窄
   let countdownLabels: [MVLabel] = MVClockView.makeCountdownLabels()
 
@@ -115,6 +115,12 @@ final class MVClockView: NSView {
   let secondsSuffixWidth = "'".size(withAttributes: [.font: MVClockView.secondsFont]).width
   /// 上次算倒计时是哪一分钟；同一分钟内不用反复算（指定了时刻的倒计时要一分钟一跳）
   var countdownRefreshMinute: TimeInterval?
+  /// 这个时钟关联的事件（从模板建出来的子时钟才有）：表盘显示它的倒计时
+  var eventID: UUID?
+  /// 轮播轮到第几个事件
+  var rotationIndex = 0
+  /// 轮播定时器：只在轮播模式开着、事件不止一个时跑
+  var rotationTimer: Timer?
 
   /// 顶部时钟用 jj:mm，秒表起始时刻用 jj:mm:ss，都跟随系统 12/24 小时制
   private static func formatter(template: String) -> DateFormatter {
@@ -277,18 +283,23 @@ final class MVClockView: NSView {
 
     guard let window = self.window else { return }
 
-    // 关键日子被增删改、折算方式改了、或者过了午夜：时钟停着时没人每秒刷新，倒计时得自己重算
+    // 起跑时就按当前的轮播开关把定时器带上；之后的起停靠通知
+    self.syncRotationTimer()
+
+    // 事件被增删改、折算方式改了、轮播切到下一个了、或者过了午夜：时钟停着时没人每秒刷新，倒计时得自己重算
     for name in [
-      MVKeyDateStore.didChangeNotification,
-      MVKeyDateSettings.didChangeNotification,
+      MVEventStore.didChangeNotification,
+      MVEventSettings.didChangeNotification,
       Notification.Name.NSCalendarDayChanged
     ] {
       self.notificationTasks.append(
         Task { [weak self] in
           for await _ in NotificationCenter.default.mvNotifications(named: name) {
             self?.updateCountdownLabels(force: true)
-            // 每日时长改了，正计时的蓝条占比也得跟着重画
+            // 每日时长改了，正计时的蓝条占比也得跟着重画；
+            // 轮播开关或事件个数变了，轮播定时器也要跟着起停
             self?.layoutSubviews()
+            self?.syncRotationTimer()
           }
         }
       )

@@ -6,10 +6,10 @@ extension MVClockView {
   private var progress: CGFloat {
     if self.mode == .stopwatch {
       // 正计时：蓝条是「今天已经学了多少」—— 今天所有计时之和（含正在跑的那条），
-      // 分母按关键日子里的每日时长
+      // 分母按事件进度里的每日时长
       return Self.stopwatchDayProgress(
         elapsed: CGFloat(MVHistoryTracker.shared.secondsToday()),
-        dayHours: MVKeyDateSettings.hoursPerDay()
+        dayHours: MVEventSettings.hoursPerDay()
       )
     }
     // 倒计时：蓝条还是小时刻度

@@ -1,23 +1,22 @@
 import AppKit
 
-// MARK: - 关键日子倒计时
+// MARK: - 事件倒计时
 
 extension MVClockView {
-  /// 倒计时区的四行位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小。
-  /// 前三条放倒计时，第四条留给总小时数
+  /// 表盘下沿两行的位置：圆心在 (75, 75)、半径 59，越靠下能用的横向宽度越小。
+  /// 第一行放倒计时（选中的或轮播到的那个事件），第二行放它的总小时数
   private static let countdownLineFrames: [(originY: CGFloat, width: CGFloat)] = [
-    (49, 100), (38, 88), (27, 72), (16, 46)
+    (49, 100), (38, 88)
   ]
 
   static func makeCountdownLabels() -> [MVLabel] {
-    Self.countdownLineFrames
-      .prefix(MVKeyDateCountdown.maxLines)
-      .map { Self.countdownLabel(originY: $0.originY, width: $0.width) }
+    let line = Self.countdownLineFrames[0]
+    return [Self.countdownLabel(originY: line.originY, width: line.width)]
   }
 
-  /// 总小时数那一行：位置随显示了几条倒计时走，见 updateCountdownLabels
   static func makeTotalHoursLabel() -> MVLabel {
-    Self.countdownLabel(originY: 16, width: 46)
+    let line = Self.countdownLineFrames[1]
+    return Self.countdownLabel(originY: line.originY, width: line.width)
   }
 
   private static func countdownLabel(originY: CGFloat, width: CGFloat) -> MVLabel {
@@ -30,8 +29,8 @@ extension MVClockView {
     return label
   }
 
-  /// 刷新表盘下沿的倒计时。同一分钟内不重复算（每秒钟都会走到这里）；
-  /// 关键日子改了或跨过午夜时用 force 强制重算
+  /// 刷新表盘下沿的事件倒计时。同一分钟内不重复算（每秒钟都会走到这里）；
+  /// 事件改了、选中变了、轮播切到下一个了、跨过午夜时用 force 强制重算
   func updateCountdownLabels(force: Bool = false) {
     let calendar = Calendar.current
     let now = Date()
@@ -40,29 +39,63 @@ extension MVClockView {
     if !force, self.countdownRefreshMinute == minute { return }
     self.countdownRefreshMinute = minute
 
-    let items = MVKeyDateCountdown.upcoming(from: MVKeyDateStore.load(), now: now, calendar: calendar)
+    let events = MVEventStore.load()
+    let item: MVEventCountdownItem?
 
-    for (index, label) in self.countdownLabels.enumerated() {
-      guard index < items.count else {
-        label.string = ""
-        continue
-      }
-      label.string = MVKeyDateCountdown.line(items[index])
+    if let ownEventID = self.eventID {
+      // 从模板建出来的子时钟：显示它自己关联的那个事件
+      item = MVEventCountdown.item(
+        from: events, preferredEventID: ownEventID, now: now, calendar: calendar
+      )
+    } else if MVEventSettings.isRotating() {
+      item = MVEventCountdown.rotatingItem(
+        from: events, index: self.rotationIndex, now: now, calendar: calendar
+      )
+    } else {
+      // 显示全局选中的；没人选过就按日期取最近的
+      item = MVEventCountdown.item(
+        from: events, preferredEventID: MVEventSettings.selectedEventID(), now: now, calendar: calendar
+      )
     }
 
-    // 总小时数只给最近那条算，紧跟在最后一条倒计时下面：显示几条就占第几条的位置
-    let hoursPerDay = MVKeyDateSettings.hoursPerDay()
-    let totalHours = items.first.map { MVKeyDateCountdown.totalHoursText($0, hoursPerDay: hoursPerDay) ?? "" } ?? ""
-    self.totalHoursLabel.string = totalHours
-    guard !totalHours.isEmpty else { return }
+    self.countdownLabels.first?.string = item.map(MVEventCountdown.line) ?? ""
 
-    let index = min(items.count, Self.countdownLineFrames.count - 1)
-    let line = Self.countdownLineFrames[index]
-    self.totalHoursLabel.frame = NSRect(
-      x: (Self.designSize - line.width) / 2,
-      y: line.originY,
-      width: line.width,
-      height: 11
-    )
+    // 总小时数按这条事件自己的每日时长折算（没填回落全局），紧跟在倒计时下面
+    let totalHours = item.flatMap {
+      MVEventCountdown.totalHoursText($0, hoursPerDay: $0.event.effectiveHoursPerDay())
+    } ?? ""
+    self.totalHoursLabel.string = totalHours
+  }
+
+  // MARK: - 轮播
+
+  /// 轮播模式开着、事件不止一个、本时钟又没有自己关联的事件时，起一个定时器每几秒切一条；
+  /// 别的情况把它停掉。事件列表或显示设置一变就调一次
+  func syncRotationTimer() {
+    let shouldRotate = self.eventID == nil
+      && MVEventSettings.isRotating()
+      && MVEventCountdown.upcoming(from: MVEventStore.load()).count > 1
+
+    if shouldRotate {
+      if self.rotationTimer == nil {
+        self.rotationTimer = Timer.scheduledTimer(
+          withTimeInterval: MVEventCountdown.rotationInterval,
+          repeats: true
+        ) { [weak self] _ in
+          MainActor.assumeIsolated {
+            self?.advanceRotation()
+          }
+        }
+      }
+    } else if self.rotationTimer != nil {
+      self.rotationTimer?.invalidate()
+      self.rotationTimer = nil
+    }
+  }
+
+  @MainActor
+  private func advanceRotation() {
+    self.rotationIndex += 1
+    self.updateCountdownLabels(force: true)
   }
 }

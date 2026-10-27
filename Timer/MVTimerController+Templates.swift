@@ -20,9 +20,12 @@ extension MVTimerController {
     self.makeChildClock()?.applyTemplate(template)
   }
 
-  /// 把模板套到这个（刚建好的）子时钟上：名字、模式、时长、是否起跑，再把下级一个个建出来
+  /// 把模板套到这个（刚建好的）子时钟上：名字、模式、时长、是否起跑，再把下级一个个建出来。
+  /// 模板带了事件的，表盘下方显示那个事件的倒计时
   func applyTemplate(_ template: ChildClockTemplate) {
     self.clockView.clockTitle = template.name
+    self.clockView.eventID = template.eventID
+    self.clockView.updateCountdownLabels(force: true)
     self.setMode(template.mode)
 
     if template.mode == .countdown {

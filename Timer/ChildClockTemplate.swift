@@ -11,6 +11,9 @@ struct ChildClockTemplate: Codable, Equatable, Identifiable, Sendable {
   var autoStart: Bool
   /// 勾选「记录下级子时钟」后记下的下级；用模板新建时一并建出来
   var children: [Self]
+  /// 这个模板的「倒计时显示」：从模板建出来的子时钟，表盘下方显示这个事件的倒计时。
+  /// 创建事件时勾「生成子时钟模板」就会带上
+  var eventID: UUID?
 
   init(
     id: UUID,
@@ -18,7 +21,8 @@ struct ChildClockTemplate: Codable, Equatable, Identifiable, Sendable {
     mode: TimerMode,
     duration: CGFloat = 0,
     autoStart: Bool = true,
-    children: [Self] = []
+    children: [Self] = [],
+    eventID: UUID? = nil
   ) {
     self.id = id
     self.name = name
@@ -26,11 +30,12 @@ struct ChildClockTemplate: Codable, Equatable, Identifiable, Sendable {
     self.duration = duration
     self.autoStart = autoStart
     self.children = children
+    self.eventID = eventID
   }
 
-  // 早期版本存的模板没有 children，读不到就当没有下级
+  // 早期版本存的模板没有 children / eventID，读不到就当没有
   private enum CodingKeys: String, CodingKey {
-    case autoStart, children, duration, id, mode, name
+    case autoStart, children, duration, eventID, id, mode, name
   }
 
   init(from decoder: Decoder) throws {
@@ -41,6 +46,7 @@ struct ChildClockTemplate: Codable, Equatable, Identifiable, Sendable {
     self.duration = try container.decode(CGFloat.self, forKey: .duration)
     self.autoStart = try container.decode(Bool.self, forKey: .autoStart)
     self.children = try container.decodeIfPresent([Self].self, forKey: .children) ?? []
+    self.eventID = try container.decodeIfPresent(UUID.self, forKey: .eventID)
   }
 
   /// 菜单悬停提示用的一行说明，例如「倒计时 25:00」「秒表 · 含 2 个下级」
@@ -54,8 +60,12 @@ struct ChildClockTemplate: Codable, Equatable, Identifiable, Sendable {
       description = "秒表"
     }
 
+    let eventTail = self.eventID != nil ? " · 显示事件倒计时" : ""
     let descendants = self.flattenedDescendants.count
-    return descendants > 0 ? "\(description) · 含 \(descendants) 个下级" : description
+    if descendants > 0 {
+      return "\(description) · 含 \(descendants) 个下级\(eventTail)"
+    }
+    return description + eventTail
   }
 
   /// 先序遍历出所有下级（含下级的下级），顺序与编辑面板里的行一致
