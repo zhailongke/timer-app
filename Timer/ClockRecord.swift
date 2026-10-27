@@ -89,6 +89,22 @@ struct ClockRecord: Codable, Equatable, Identifiable, Sendable {
   var summary: String {
     "\(self.startDateDisplay) → \(self.endDateDisplay) · \(self.durationDisplay)"
   }
+
+  // MARK: - 算某一天的时长
+
+  /// 落在 [dayStart, dayEnd) 这段时间里的计时时长。
+  /// 跨天的计时按天切开：第二天从 0 点重新算，前一天的时长归前一天。
+  /// 墙钟跨度跟真实时长不一定对得上（暂停的时间不算），所以按跨度比例摊到各天
+  func duration(within dayStart: Date, dayEnd: Date) -> TimeInterval {
+    let span = self.endDate.timeIntervalSince(self.startDate)
+    guard span > 0 else { return 0 }
+
+    let overlapStart = max(self.startDate, dayStart)
+    let overlapEnd = min(self.endDate, dayEnd)
+    guard overlapEnd > overlapStart else { return 0 }
+
+    return self.duration * (overlapEnd.timeIntervalSince(overlapStart) / span)
+  }
 }
 
 extension Array where Element == ClockRecord {
@@ -134,6 +150,14 @@ extension Array where Element == ClockRecord {
       if self[index].children.append(record, underParent: parentID) { return true }
     }
     return false
+  }
+
+  /// 这一层以及所有下级落在 [dayStart, dayEnd) 里的计时总时长
+  func duration(within dayStart: Date, dayEnd: Date) -> TimeInterval {
+    self.reduce(0) {
+      $0 + $1.duration(within: dayStart, dayEnd: dayEnd)
+        + $1.children.duration(within: dayStart, dayEnd: dayEnd)
+    }
   }
 
   /// 含所有下级的条数

@@ -66,6 +66,7 @@
 		CC000016CCCC001600000001 /* TimerStopwatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001600000000 /* TimerStopwatchTests.swift */; };
 		CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001700000000 /* TimerTemplateTests.swift */; };
 		CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001800000000 /* TimerHistoryTests.swift */; };
+		CC000016CCCC001900000001 /* TimerHistoryDayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000016CCCC001900000000 /* TimerHistoryDayTests.swift */; };
 		CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000017CCCC001700000000 /* TimerChildClockTests.swift */; };
 		CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */; };
 		CC000019CCCC001900000001 /* TimerWindowControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */; };
@@ -159,6 +160,7 @@
 		CC000016CCCC001600000000 /* TimerStopwatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerStopwatchTests.swift; sourceTree = "<group>"; };
 		CC000016CCCC001700000000 /* TimerTemplateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerTemplateTests.swift; sourceTree = "<group>"; };
 		CC000016CCCC001800000000 /* TimerHistoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerHistoryTests.swift; sourceTree = "<group>"; };
+		CC000016CCCC001900000000 /* TimerHistoryDayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerHistoryDayTests.swift; sourceTree = "<group>"; };
 		CC000017CCCC001700000000 /* TimerChildClockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerChildClockTests.swift; sourceTree = "<group>"; };
 		CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerModeIndependenceTests.swift; sourceTree = "<group>"; };
 		CC000019CCCC001900000000 /* TimerWindowControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerWindowControlsTests.swift; sourceTree = "<group>"; };
@@ -290,6 +292,7 @@
 				CC000016CCCC001600000000 /* TimerStopwatchTests.swift */,
 				CC000016CCCC001700000000 /* TimerTemplateTests.swift */,
 				CC000016CCCC001800000000 /* TimerHistoryTests.swift */,
+				CC000016CCCC001900000000 /* TimerHistoryDayTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000017CCCC001700000000 /* TimerChildClockTests.swift */,
 				CC000018CCCC001800000000 /* TimerModeIndependenceTests.swift */,
@@ -510,6 +513,7 @@
 				CC000016CCCC001600000001 /* TimerStopwatchTests.swift in Sources */,
 				CC000016CCCC001700000001 /* TimerTemplateTests.swift in Sources */,
 				CC000016CCCC001800000001 /* TimerHistoryTests.swift in Sources */,
+				CC000016CCCC001900000001 /* TimerHistoryDayTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000017CCCC001700000001 /* TimerChildClockTests.swift in Sources */,
 				CC000018CCCC001800000001 /* TimerModeIndependenceTests.swift in Sources */,

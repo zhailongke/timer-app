@@ -152,6 +152,14 @@ final class MVHistoryTracker {
     self.onChange?()
   }
 
+  /// 今天已经计时的总秒数：记在历史里今天的那些记录之和。
+  /// 正在跑的那条也在 records 里（每秒刷新时长），所以不用另外再加当前计时
+  func secondsToday(now: Date = Date(), calendar: Calendar = .current) -> TimeInterval {
+    let dayStart = calendar.startOfDay(for: now)
+    guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else { return 0 }
+    return self.records.duration(within: dayStart, dayEnd: dayEnd)
+  }
+
   /// 退出前用：把没落盘的记录刷到磁盘，免得这次白记
   func flush() {
     self.save()

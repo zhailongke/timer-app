@@ -5,9 +5,10 @@ import AppKit
 extension MVClockView {
   private var progress: CGFloat {
     if self.mode == .stopwatch {
-      // 正计时：蓝条是「今天已经用掉多少」，一天多长按关键日子里的每日时长算
+      // 正计时：蓝条是「今天已经学了多少」—— 今天所有计时之和（含正在跑的那条），
+      // 分母按关键日子里的每日时长
       return Self.stopwatchDayProgress(
-        elapsed: self.elapsedSeconds,
+        elapsed: CGFloat(MVHistoryTracker.shared.secondsToday()),
         dayHours: MVKeyDateSettings.hoursPerDay()
       )
     }
@@ -43,6 +44,8 @@ extension MVClockView {
     self.arrowView.frame = frame
 
     self.progressView.progress = self.progress
+    // 正计时的蓝条表示「占一天多少」，六等份的刻度才有意义；倒计时是小时刻度，不画
+    self.progressView.ticks = self.mode == .stopwatch ? 6 : 0
     self.arrowView.progress = self.progress
   }
 
